@@ -46,6 +46,14 @@ export function getMatchEvents(matchId: number): Promise<MatchDetail> {
   return apiFetch(`/api/v1/matches/${matchId}/events`);
 }
 
+export function getLiveMatchesSummary(): Promise<MatchSummary[]> {
+  return apiFetch("/api/v1/matches/live/summary");
+}
+
+export function getMatchesByDate(date: string): Promise<MatchSummary[]> {
+  return apiFetch(`/api/v1/matches/date/${date}`);
+}
+
 // ─── Team endpoints ───────────────────────────────────────────────────
 
 export function getTeam(teamId: number): Promise<TeamProfile> {

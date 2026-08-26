@@ -25,7 +25,7 @@ export function MatchStats({ stats }: { stats: MatchStatsType }) {
               </span>
               <div>
                 <div className="mb-0.5 text-center text-xs text-zinc-400">{bar.label}</div>
-                <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100">
                   <div
                     className="rounded-l-full bg-blue-500"
                     style={{ width: `${homePct}%` }}

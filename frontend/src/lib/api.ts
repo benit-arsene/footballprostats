@@ -15,8 +15,7 @@ import type {
   PlayerProfile,
   LeagueProfile,
 } from "./types";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { API_BASE, POLL_INTERVALS } from "./constants";
 
 // ─── Generic fetch helper ─────────────────────────────────────────────
 
@@ -85,12 +84,3 @@ export type PollingOptions = {
 export function shouldPoll(status: string): boolean {
   return status === "live";
 }
-
-/**
- * Polling interval constants (in milliseconds).
- * Live matches poll every 15 s; near-live every 30 s.
- */
-export const POLL_INTERVALS = {
-  LIVE: 15_000,
-  NEAR_LIVE: 30_000,
-} as const;

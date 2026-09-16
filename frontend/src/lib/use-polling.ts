@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { POLL_INTERVALS, shouldPoll } from "./api";
+import { POLL_INTERVALS } from "./constants";
+import { shouldPoll } from "./api";
 
 type UsePollingOptions<T> = {
   /** Async function that fetches the data */

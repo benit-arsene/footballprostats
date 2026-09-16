@@ -7,10 +7,10 @@ Endpoints:
 
 from fastapi import APIRouter, HTTPException
 
-from models import LeagueProfile
+from models import LeagueProfile, LeagueSummary
 from services import football_api
-from services.mapper import map_standing_row, map_top_scorer, map_match_summary
-from services.football_api import get_season_year
+from services.mapper import map_standing_row, map_top_scorer, map_match_summary, make_slug
+from config import get_season_year
 
 router = APIRouter(prefix="/api/v1/leagues", tags=["leagues"])
 
@@ -27,7 +27,10 @@ async def get_league_profile(league_id: int):
         # Get league info
         league_data = await football_api.get_league(league_id, season)
         if not league_data:
-            raise HTTPException(status_code=404, detail=f"League {league_id} not found")
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "NOT_FOUND", "message": f"League {league_id} not found"}},
+            )
 
         league_info = league_data.get("league", {})
         country = league_data.get("country", {})
@@ -49,17 +52,17 @@ async def get_league_profile(league_id: int):
         # Get fixtures
         try:
             from datetime import date
+
             today = date.today().isoformat()
             fixtures_data = await football_api.get_fixtures_by_date(today, league_id)
             fixtures = [map_match_summary(f) for f in fixtures_data[:20]]
         except Exception:
             fixtures = []
 
-        from models import LeagueSummary
         league_summary = LeagueSummary(
             id=league_info.get("id", league_id),
             name=league_info.get("name", f"League {league_id}"),
-            slug=f"{league_info.get('name', f'league-{league_id}').lower().replace(' ', '-')}-{league_id}",
+            slug=make_slug(league_info.get("name", f"league-{league_id}"), league_id),
             country=country.get("name", ""),
             logo_url=league_info.get("logo", ""),
         )
@@ -73,5 +76,7 @@ async def get_league_profile(league_id: int):
         )
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})

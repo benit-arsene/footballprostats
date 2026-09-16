@@ -13,6 +13,15 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class APIErrorResponse(BaseModel):
+    error: APIErrorDetail
+
+
+class APIErrorDetail(BaseModel):
+    code: str
+    message: str
+
+
 # ─── Enums ─────────────────────────────────────────────────────────────
 
 

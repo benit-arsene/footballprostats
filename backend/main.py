@@ -3,6 +3,8 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from routes import matches, teams, players, leagues
 
@@ -17,7 +19,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Register versioned API routers ───────────────────────────────────
+# ─── Exception Handlers ─────────────────────────────────────────
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Invalid request parameters",
+            }
+        },
+    )
+
+
+# ─── Register versioned API routers ───────────────────────────
 # All endpoints live under /api/v1/ for clean versioning.
 # Each router defines its own sub-path:
 #   /api/v1/matches/...

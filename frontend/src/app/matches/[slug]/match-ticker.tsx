@@ -37,14 +37,11 @@ export function MatchTicker({
   awayCrest?: string;
 }) {
   const fetchEvents = useCallback(
-    () => getMatchEvents(matchId).then((m) => m.events),
+    (): Promise<MatchEvent[]> => getMatchEvents(matchId).then((m) => m.events),
     [matchId]
   );
 
-  const { data: liveEvents, isPolling } = useMatchPolling(
-    fetchEvents as () => Promise<import("@/lib/types").MatchEvent[]>,
-    status
-  );
+  const { data: liveEvents, isPolling } = useMatchPolling(fetchEvents, status);
 
   // Use polled events when available, otherwise fall back to SSR data
   const events = (liveEvents ?? initialEvents).slice().reverse();

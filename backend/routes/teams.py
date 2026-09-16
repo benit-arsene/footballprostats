@@ -9,8 +9,8 @@ from fastapi import APIRouter, HTTPException
 
 from models import TeamProfile
 from services import football_api
-from services.mapper import map_team_summary, map_player_summary, map_league_summary
-from services.football_api import get_season_year
+from services.mapper import map_team_summary, map_player_summary, map_league_summary, make_slug
+from config import get_season_year
 
 router = APIRouter(prefix="/api/v1/teams", tags=["teams"])
 
@@ -23,7 +23,10 @@ async def get_team_profile(team_id: int):
     try:
         team_data = await football_api.get_team(team_id)
         if not team_data:
-            raise HTTPException(status_code=404, detail=f"Team {team_id} not found")
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "NOT_FOUND", "message": f"Team {team_id} not found"}},
+            )
 
         team_info = team_data.get("team", {})
         venue = team_data.get("venue", {})
@@ -51,7 +54,7 @@ async def get_team_profile(team_id: int):
         return TeamProfile(
             id=team_info["id"],
             name=team_info.get("name", ""),
-            slug=f"{team_info.get('name', '').lower().replace(' ', '-')}-{team_info['id']}",
+            slug=make_slug(team_info.get("name", ""), team_info["id"]),
             short_name=team_info.get("name", "")[:3].upper(),
             crest_url=team_info.get("logo", ""),
             league=league_summary,
@@ -62,5 +65,7 @@ async def get_team_profile(team_id: int):
         )
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})

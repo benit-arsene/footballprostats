@@ -23,7 +23,6 @@ from models import (
     CareerStats,
     MatchLogEntry,
 )
-from services.football_api import LEAGUE_IDS
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────
@@ -102,6 +101,10 @@ def _make_slug(name: str, id: int) -> str:
     slug = re.sub(r"-+", "-", slug)
     slug = slug.strip("-")
     return f"{slug}-{id}"
+
+
+# Public alias for external use
+make_slug = _make_slug
 
 
 # ─── Team mappers ────────────────────────────────────────────────────

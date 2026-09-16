@@ -7,45 +7,76 @@ Uses httpx for async HTTP calls.
 Free tier: 100 requests/day — keep this in mind.
 """
 
-import os
 import httpx
 from typing import Any
 
-API_KEY = os.getenv("APIFOOTBALL_KEY", "")
-API_HOST = os.getenv("APIFOOTBALL_HOST", "v3.football.api-sports.io")
-BASE_URL = f"https://{API_HOST}"
-
-# Default league IDs for our mock data
-LEAGUE_IDS = {
-    "premier-league": 39,
-    "la-liga": 140,
-    "champions-league": 2,
-    "bundesliga": 78,
-    "serie-a": 135,
-}
+from config import API_KEY, API_HOST, BASE_URL, REQUEST_TIMEOUT
 
 headers = {
     "x-apisports-key": API_KEY,
 }
 
+_client: httpx.AsyncClient | None = None
+
+
+def _get_client() -> httpx.AsyncClient:
+    global _client
+    if _client is None:
+        _client = httpx.AsyncClient(
+            base_url=BASE_URL,
+            headers=headers,
+            timeout=REQUEST_TIMEOUT,
+        )
+    return _client
+
+
+class APIError(Exception):
+    pass
+
+
+class APIRateLimitError(APIError):
+    pass
+
+
+class APITimeoutError(APIError):
+    pass
+
+
+class APIConnectionError(APIError):
+    pass
+
+
+class APIInvalidResponseError(APIError):
+    pass
+
 
 async def _get(endpoint: str, params: dict[str, Any] | None = None) -> dict:
     """Make a GET request to API-Football."""
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{BASE_URL}/{endpoint}",
-            headers=headers,
-            params=params or {},
-            timeout=10.0,
-        )
-        response.raise_for_status()
+    client = _get_client()
+    try:
+        response = await client.get(endpoint, params=params or {})
+    except httpx.TimeoutException as e:
+        raise APITimeoutError(f"Request timed out: {e}") from e
+    except httpx.ConnectError as e:
+        raise APIConnectionError(f"Connection failed: {e}") from e
+    except httpx.RequestError as e:
+        raise APIError(f"Request failed: {e}") from e
+
+    if response.status_code == 429:
+        raise APIRateLimitError("Rate limit exceeded")
+
+    if response.status_code >= 400:
+        raise APIError(f"Upstream error {response.status_code}")
+
+    try:
         data = response.json()
+    except Exception as e:
+        raise APIInvalidResponseError(f"Invalid JSON response: {e}") from e
 
-        # API-Football wraps responses in { "get": ..., "response": [...] }
-        if data.get("errors"):
-            raise ValueError(f"API error: {data['errors']}")
+    if data.get("errors"):
+        raise APIInvalidResponseError(f"API error: {data['errors']}")
 
-        return data
+    return data
 
 
 # ─── Match / Fixture endpoints ───────────────────────────────────────
@@ -155,13 +186,4 @@ async def get_top_scorers(league_id: int, season: int) -> list[dict]:
     return data.get("response", [])
 
 
-# ─── Utilities ───────────────────────────────────────────────────────
 
-def get_season_year() -> int:
-    """Get the current season year (approximate)."""
-    from datetime import datetime
-    now = datetime.now()
-    # Football seasons typically run Aug-May
-    if now.month >= 8:
-        return now.year
-    return now.year - 1

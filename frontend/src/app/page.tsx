@@ -1,35 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { MatchSummary, MatchStatus, StandingRow, LeagueSummary } from "@/lib/types";
+import type { MatchSummary, MatchStatus, StandingRow } from "@/lib/types";
 import { getLiveMatchesSummary } from "@/lib/api";
+import { HOME_LEAGUE_IDS, HOMEPAGE_REFRESH_INTERVAL } from "@/lib/constants";
+import { MOCK_STANDINGS, MOCK_MATCHES, MOCK_TOP_SCORERS } from "@/lib/mock-data";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-// ─── Mock data (remove when API is wired) ─────────────────────────────
-
-const MOCK_LEAGUES: LeagueSummary[] = [
-  { id: 1, name: "Premier League", slug: "premier-league-1", country: "England", logo_url: "" },
-  { id: 2, name: "La Liga", slug: "la-liga-2", country: "Spain", logo_url: "" },
-  { id: 3, name: "Champions League", slug: "champions-league-3", country: "Europe", logo_url: "" },
-];
-
-const MOCK_STANDINGS: StandingRow[] = [
-  { position: 1, team: { id: 10, name: "Arsenal", slug: "arsenal-10", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png" }, played: 28, won: 22, drawn: 4, lost: 2, gf: 68, ga: 24, gd: 44, points: 70, form: ["W","W","D","W","W"] },
-  { position: 2, team: { id: 11, name: "Liverpool", slug: "liverpool-11", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/kfaher1737969724.png" }, played: 28, won: 21, drawn: 5, lost: 2, gf: 65, ga: 26, gd: 39, points: 68, form: ["W","D","W","W","L"] },
-  { position: 3, team: { id: 12, name: "Man City", slug: "man-city-12", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png" }, played: 28, won: 20, drawn: 4, lost: 4, gf: 62, ga: 30, gd: 32, points: 64, form: ["L","W","W","D","W"] },
-  { position: 4, team: { id: 13, name: "Chelsea", slug: "chelsea-13", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/pbf4ul1782638263.png" }, played: 28, won: 15, drawn: 7, lost: 6, gf: 48, ga: 35, gd: 13, points: 52, form: ["D","W","L","W","W"] },
-  { position: 5, team: { id: 14, name: "Aston Villa", slug: "aston-villa-14", crest_url: "" }, played: 28, won: 14, drawn: 6, lost: 8, gf: 45, ga: 38, gd: 7, points: 48, form: ["W","L","D","W","L"] },
-];
-
-const MOCK_MATCHES: MatchSummary[] = [
-  { id: 101, slug: "arsenal-vs-chelsea-101", status: "live", minute: 67, date: "2026-08-22", kickoff_time: "15:00", venue: "Emirates Stadium", league: MOCK_LEAGUES[0], home_team: { id: 10, name: "Arsenal", slug: "arsenal-10", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png" }, away_team: { id: 13, name: "Chelsea", slug: "chelsea-13", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/pbf4ul1782638263.png" }, home_score: 2, away_score: 1 },
-  { id: 102, slug: "real-madrid-vs-barcelona-102", status: "live", minute: 34, date: "2026-08-22", kickoff_time: "21:00", venue: "Santiago Bernabeu", league: MOCK_LEAGUES[1], home_team: { id: 20, name: "Real Madrid", slug: "real-madrid-20", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/vwvwrw1473502969.png" }, away_team: { id: 21, name: "Barcelona", slug: "barcelona-21", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/wq9sir1639406443.png" }, home_score: 1, away_score: 1 },
-  { id: 103, slug: "liverpool-vs-man-city-103", status: "finished", minute: null, date: "2026-08-22", kickoff_time: "12:30", venue: "Anfield", league: MOCK_LEAGUES[0], home_team: { id: 11, name: "Liverpool", slug: "liverpool-11", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/kfaher1737969724.png" }, away_team: { id: 12, name: "Man City", slug: "man-city-12", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png" }, home_score: 3, away_score: 2 },
-  { id: 104, slug: "bayern-vs-dortmund-104", status: "finished", minute: null, date: "2026-08-22", kickoff_time: "18:30", venue: "Allianz Arena", league: MOCK_LEAGUES[2], home_team: { id: 30, name: "Bayern Munich", slug: "bayern-munich-30", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/01ogkh1716960412.png" }, away_team: { id: 31, name: "Dortmund", slug: "dortmund-31", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/tqo8ge1716960353.png" }, home_score: 4, away_score: 0 },
-  { id: 105, slug: "inter-vs-ac-milan-105", status: "scheduled", minute: null, date: "2026-08-22", kickoff_time: "20:45", venue: "San Siro", league: MOCK_LEAGUES[2], home_team: { id: 40, name: "Inter Milan", slug: "inter-milan-40", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/ryhu6d1617113103.png" }, away_team: { id: 41, name: "AC Milan", slug: "ac-milan-41", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/wvspur1448806617.png" }, home_score: 0, away_score: 0 },
-  { id: 106, slug: "juventus-vs-napoli-106", status: "scheduled", minute: null, date: "2026-08-22", kickoff_time: "20:45", venue: "Allianz Stadium", league: MOCK_LEAGUES[2], home_team: { id: 42, name: "Juventus", slug: "juventus-42", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/uxf0gr1742983727.png" }, away_team: { id: 43, name: "Napoli", slug: "napoli-43", crest_url: "https://r2.thesportsdb.com/images/media/team/badge/l8qyxv1742982541.png" }, home_score: 0, away_score: 0 },
-];
-
-// ─── Flag helper (league headers only) ────────────────────────────────
+// ─── Flag helper (league headers only) ────────────────────────
 
 const LEAGUE_COUNTRY: Record<string, string> = {
   England: "gb", Spain: "es", Europe: "eu",
@@ -41,7 +19,7 @@ function leagueFlag(country: string) {
   return code ? `https://flagcdn.com/w40/${code}.png` : null;
 }
 
-// ─── Utility ──────────────────────────────────────────────────────────
+// ─── Utility ──────────────────────────────────────────────────
 
 function groupByLeague(matches: MatchSummary[]) {
   const map = new Map<number, MatchSummary[]>();
@@ -285,15 +263,7 @@ function StandingsWidget({ standings }: { standings: StandingRow[] }) {
   );
 }
 
-function TopScorersWidget() {
-  const scorers = [
-    { name: "E. Haaland", team: "Man City", goals: 24 },
-    { name: "M. Salah", team: "Liverpool", goals: 21 },
-    { name: "O. Watkins", team: "Aston Villa", goals: 18 },
-    { name: "K. Palmer", team: "Chelsea", goals: 17 },
-    { name: "B. Saka", team: "Arsenal", goals: 16 },
-  ];
-
+function TopScorersWidget({ scorers }: { scorers: { player: { name: string }; team: { name: string }; goals: number }[] }) {
   return (
     <div className="mt-4 rounded-xl border border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-4 py-3">
@@ -302,11 +272,11 @@ function TopScorersWidget() {
       </div>
       <div className="divide-y divide-zinc-50">
         {scorers.map((s, i) => (
-          <div key={s.name} className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors">
+          <div key={s.player.name} className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors">
             <span className="w-4 text-center text-[11px] font-bold text-zinc-300 tabular-nums">{i + 1}</span>
             <div className="flex-1 overflow-hidden">
-              <div className="text-xs font-semibold text-black truncate">{s.name}</div>
-              <div className="text-[10px] text-zinc-400">{s.team}</div>
+              <div className="text-xs font-semibold text-black truncate">{s.player.name}</div>
+              <div className="text-[10px] text-zinc-400">{s.team.name}</div>
             </div>
             <span className="text-xs font-bold tabular-nums text-black">{s.goals}</span>
           </div>
@@ -385,9 +355,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState(3);
   const [liveMatches, setLiveMatches] = useState<MatchSummary[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Fetch live matches from API (PL + La Liga only)
-  // Cache last known data so it survives API errors / rate limits
   const fetchLive = useCallback(async () => {
     try {
       const apiMatches = await getLiveMatchesSummary();
@@ -420,14 +387,13 @@ export default function Dashboard() {
       }
     }
     fetchLive();
-    // Poll every 2min 30s (respect the 100 req/day limit)
-    const interval = setInterval(fetchLive, 150_000);
+    // Poll at configured interval (respects API-Football free-tier limit)
+    const interval = setInterval(fetchLive, HOMEPAGE_REFRESH_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchLive]);
 
   // Merge: real API matches first, then mock for leagues not in API
-  const API_LEAGUE_IDS = new Set([39, 140]); // PL, La Liga
-  const mockOnly = MOCK_MATCHES.filter((m) => !API_LEAGUE_IDS.has(m.league.id));
+  const mockOnly = MOCK_MATCHES.filter((m) => !HOME_LEAGUE_IDS.has(m.league.id));
   const matches = [...liveMatches, ...mockOnly];
 
   const grouped = useMemo(() => groupByLeague(matches), [matches]);
@@ -446,6 +412,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-white">
       <Header />
       <LiveTicker matches={matches} />
+
+      {loading && matches.length === 0 && (
+        <LoadingSpinner message="Loading matches..." />
+      )}
 
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -476,12 +446,12 @@ export default function Dashboard() {
             ))}
           </div>
 
-          <aside className="hidden lg:block">
-            <div className="sticky top-20">
-              <StandingsWidget standings={MOCK_STANDINGS} />
-              <TopScorersWidget />
-            </div>
-          </aside>
+      <aside className="hidden lg:block">
+        <div className="sticky top-20">
+          <StandingsWidget standings={MOCK_STANDINGS} />
+          <TopScorersWidget scorers={MOCK_TOP_SCORERS} />
+        </div>
+      </aside>
         </div>
       </main>
     </div>

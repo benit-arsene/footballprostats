@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException
 from models import LiveMatchUpdate, MatchDetail, MatchSummary
 from services import football_api
 from services.mapper import map_match_detail, map_match_summary
+from config import HOME_LEAGUE_IDS
 
 router = APIRouter(prefix="/api/v1/matches", tags=["matches"])
 
@@ -38,8 +39,10 @@ async def get_live_matches():
                 last_event_id=detail.events[-1].id if detail.events else 0,
             ))
         return results
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})
 
 
 @router.get("/live/summary", response_model=list[MatchSummary])
@@ -48,17 +51,18 @@ async def get_live_matches_summary():
     Live matches as MatchSummary (for homepage cards).
     Filters to top 5 European leagues.
     """
-    TOP_LEAGUES = {39, 140}  # PL, La Liga only
     try:
         fixtures = await football_api.get_live_fixtures()
         results = []
         for fixture in fixtures:
             league_id = fixture.get("league", {}).get("id")
-            if league_id in TOP_LEAGUES:
+            if league_id in HOME_LEAGUE_IDS:
                 results.append(map_match_summary(fixture))
         return results
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})
 
 
 @router.get("/date/{date}", response_model=list[MatchSummary])
@@ -66,15 +70,16 @@ async def get_matches_by_date(date: str):
     """
     Get fixtures for a specific date (YYYY-MM-DD) for top 5 leagues.
     """
-    TOP_LEAGUES = {39, 140}  # PL, La Liga only
     try:
         all_fixtures = []
-        for league_id in TOP_LEAGUES:
+        for league_id in HOME_LEAGUE_IDS:
             fixtures = await football_api.get_fixtures_by_date(date, league_id)
             all_fixtures.extend(fixtures)
         return [map_match_summary(f) for f in all_fixtures]
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})
 
 
 @router.get("/{match_id}", response_model=MatchDetail)
@@ -86,12 +91,14 @@ async def get_match_detail(match_id: int):
     try:
         fixture = await football_api.get_fixture(match_id)
         if not fixture:
-            raise HTTPException(status_code=404, detail=f"Match {match_id} not found")
+            raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}})
         return map_match_detail(fixture)
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})
 
 
 @router.get("/{match_id}/events", response_model=MatchDetail)
@@ -103,9 +110,11 @@ async def get_match_events(match_id: int):
     try:
         fixture = await football_api.get_fixture(match_id)
         if not fixture:
-            raise HTTPException(status_code=404, detail=f"Match {match_id} not found")
+            raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}})
         return map_match_detail(fixture)
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})

@@ -9,8 +9,8 @@ from fastapi import APIRouter, HTTPException
 
 from models import PlayerProfile, TeamSummary, CareerStats, MatchLogEntry
 from services import football_api
-from services.mapper import map_player_summary
-from services.football_api import get_season_year
+from services.mapper import map_player_summary, make_slug
+from config import get_season_year
 
 router = APIRouter(prefix="/api/v1/players", tags=["players"])
 
@@ -24,7 +24,10 @@ async def get_player_profile(player_id: int):
         season = get_season_year()
         player_data = await football_api.get_player(player_id, season)
         if not player_data:
-            raise HTTPException(status_code=404, detail=f"Player {player_id} not found")
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "NOT_FOUND", "message": f"Player {player_id} not found"}},
+            )
 
         player_info = player_data.get("player", {})
         stats_list = player_data.get("statistics", [])
@@ -103,7 +106,7 @@ async def get_player_profile(player_id: int):
         return PlayerProfile(
             id=player_info["id"],
             name=player_info.get("name", ""),
-            slug=f"{player_info.get('name', '').lower().replace(' ', '-')}-{player_info['id']}",
+            slug=make_slug(player_info.get("name", ""), player_info["id"]),
             position=current_stats.get("games", {}).get("position", "")
             if isinstance(current_stats.get("games"), dict) else "",
             number=current_stats.get("games", {}).get("number"),
@@ -117,5 +120,7 @@ async def get_player_profile(player_id: int):
         )
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"API error: {str(e)}")
+    except football_api.APIRateLimitError as e:
+        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
+    except football_api.APIError as e:
+        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})

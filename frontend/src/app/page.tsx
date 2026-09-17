@@ -7,7 +7,6 @@ import { HOME_LEAGUE_IDS, HOMEPAGE_REFRESH_INTERVAL, LEAGUE_IDS } from "@/lib/co
 import { MOCK_STANDINGS, MOCK_MATCHES, MOCK_TOP_SCORERS } from "@/lib/mock-data";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
-import { ErrorDisplay } from "@/components/ErrorDisplay";
 
 // ─── Flag helper (league headers only) ────────────────────────
 
@@ -360,7 +359,6 @@ export default function Dashboard() {
 
   // League data for sidebar (standings + top scorers)
   const [leagueProfile, setLeagueProfile] = useState<LeagueProfile | null>(null);
-  const [leagueError, setLeagueError] = useState<Error | null>(null);
   const [leagueLoading, setLeagueLoading] = useState(true);
 
   const fetchLive = useCallback(async () => {
@@ -401,8 +399,8 @@ export default function Dashboard() {
       try {
         const data = await getLeague(LEAGUE_IDS.premier_league);
         setLeagueProfile(data);
-      } catch (e) {
-        setLeagueError(e instanceof Error ? e : new Error(String(e)));
+      } catch {
+        // Fallback handled via MOCK_STANDINGS / MOCK_TOP_SCORERS below
       } finally {
         setLeagueLoading(false);
       }
@@ -474,8 +472,6 @@ export default function Dashboard() {
             <div className="sticky top-20">
               {leagueLoading ? (
                 <LoadingSpinner message="Loading standings..." />
-              ) : leagueError ? (
-                <ErrorDisplay error={leagueError} />
               ) : (
                 <>
                   {standings.length > 0 ? (

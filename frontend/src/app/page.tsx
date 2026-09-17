@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { MatchSummary, MatchStatus, StandingRow } from "@/lib/types";
-import { getLiveMatchesSummary } from "@/lib/api";
-import { HOME_LEAGUE_IDS, HOMEPAGE_REFRESH_INTERVAL } from "@/lib/constants";
+import type { MatchSummary, MatchStatus, StandingRow, LeagueProfile } from "@/lib/types";
+import { getLiveMatchesSummary, getLeague } from "@/lib/api";
+import { HOME_LEAGUE_IDS, HOMEPAGE_REFRESH_INTERVAL, LEAGUE_IDS } from "@/lib/constants";
 import { MOCK_STANDINGS, MOCK_MATCHES, MOCK_TOP_SCORERS } from "@/lib/mock-data";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorDisplay } from "@/components/ErrorDisplay";
 
 // ─── Flag helper (league headers only) ────────────────────────
 
@@ -221,11 +223,11 @@ function LeagueSection({ matches }: { matches: MatchSummary[] }) {
   );
 }
 
-function StandingsWidget({ standings }: { standings: StandingRow[] }) {
+function StandingsWidget({ standings, leagueName, leagueSlug }: { standings: StandingRow[]; leagueName: string; leagueSlug: string }) {
   return (
     <div className="rounded-xl border border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-4 py-3">
-        <h3 className="text-sm font-bold text-black">Premier League</h3>
+        <h3 className="text-sm font-bold text-black">{leagueName}</h3>
         <p className="text-[11px] text-zinc-400">Standings</p>
       </div>
       <table className="w-full text-xs">
@@ -255,7 +257,7 @@ function StandingsWidget({ standings }: { standings: StandingRow[] }) {
         </tbody>
       </table>
       <div className="border-t border-zinc-100 px-4 py-2.5">
-        <a href="/leagues/premier-league-1" className="text-[11px] font-medium text-zinc-400 hover:text-black">
+        <a href={`/leagues/${leagueSlug}`} className="text-[11px] font-medium text-zinc-400 hover:text-black">
           Full standings
         </a>
       </div>
@@ -263,12 +265,12 @@ function StandingsWidget({ standings }: { standings: StandingRow[] }) {
   );
 }
 
-function TopScorersWidget({ scorers }: { scorers: { player: { name: string }; team: { name: string }; goals: number }[] }) {
+function TopScorersWidget({ scorers, leagueName, season }: { scorers: { player: { name: string }; team: { name: string }; goals: number }[]; leagueName: string; season: string }) {
   return (
     <div className="mt-4 rounded-xl border border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-4 py-3">
         <h3 className="text-sm font-bold text-black">Top Scorers</h3>
-        <p className="text-[11px] text-zinc-400">Premier League 25/26</p>
+        <p className="text-[11px] text-zinc-400">{leagueName} {season}</p>
       </div>
       <div className="divide-y divide-zinc-50">
         {scorers.map((s, i) => (
@@ -355,18 +357,22 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState(3);
   const [liveMatches, setLiveMatches] = useState<MatchSummary[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // League data for sidebar (standings + top scorers)
+  const [leagueProfile, setLeagueProfile] = useState<LeagueProfile | null>(null);
+  const [leagueError, setLeagueError] = useState<Error | null>(null);
+  const [leagueLoading, setLeagueLoading] = useState(true);
+
   const fetchLive = useCallback(async () => {
     try {
       const apiMatches = await getLiveMatchesSummary();
       if (apiMatches.length > 0) {
         setLiveMatches([...apiMatches]);
-        // Save to sessionStorage as backup
         if (typeof window !== "undefined") {
           sessionStorage.setItem("liveMatches", JSON.stringify(apiMatches));
         }
       }
     } catch {
-      // API error / rate limit — restore from cache if available
       if (typeof window !== "undefined") {
         const cached = sessionStorage.getItem("liveMatches");
         if (cached) {
@@ -379,7 +385,6 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    // Restore from cache immediately
     if (typeof window !== "undefined") {
       const cached = sessionStorage.getItem("liveMatches");
       if (cached) {
@@ -387,10 +392,23 @@ export default function Dashboard() {
       }
     }
     fetchLive();
-    // Poll at configured interval (respects API-Football free-tier limit)
     const interval = setInterval(fetchLive, HOMEPAGE_REFRESH_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchLive]);
+
+  useEffect(() => {
+    const fetchLeague = async () => {
+      try {
+        const data = await getLeague(LEAGUE_IDS.premier_league);
+        setLeagueProfile(data);
+      } catch (e) {
+        setLeagueError(e instanceof Error ? e : new Error(String(e)));
+      } finally {
+        setLeagueLoading(false);
+      }
+    };
+    fetchLeague();
+  }, []);
 
   // Merge: real API matches first, then mock for leagues not in API
   const mockOnly = MOCK_MATCHES.filter((m) => !HOME_LEAGUE_IDS.has(m.league.id));
@@ -399,6 +417,12 @@ export default function Dashboard() {
   const grouped = useMemo(() => groupByLeague(matches), [matches]);
   const liveCount = matches.filter((m) => m.status === "live").length;
   const finishedCount = matches.filter((m) => m.status === "finished").length;
+
+  // Sidebar data: real API or mock fallback
+  const standings = leagueProfile?.standings ?? MOCK_STANDINGS;
+  const scorers = leagueProfile?.top_scorers ?? MOCK_TOP_SCORERS;
+  const leagueName = leagueProfile?.name ?? "Premier League";
+  const season = leagueProfile?.season ?? "25/26";
 
   const today = new Date();
   const headingDate = new Date(today);
@@ -446,12 +470,28 @@ export default function Dashboard() {
             ))}
           </div>
 
-      <aside className="hidden lg:block">
-        <div className="sticky top-20">
-          <StandingsWidget standings={MOCK_STANDINGS} />
-          <TopScorersWidget scorers={MOCK_TOP_SCORERS} />
-        </div>
-      </aside>
+          <aside className="hidden lg:block">
+            <div className="sticky top-20">
+              {leagueLoading ? (
+                <LoadingSpinner message="Loading standings..." />
+              ) : leagueError ? (
+                <ErrorDisplay error={leagueError} />
+              ) : (
+                <>
+                  {standings.length > 0 ? (
+                    <StandingsWidget standings={standings} leagueName={leagueName} leagueSlug={leagueProfile?.slug ?? "premier-league-1"} />
+                  ) : (
+                    <EmptyState message="No standings available" />
+                  )}
+                  {scorers.length > 0 ? (
+                    <TopScorersWidget scorers={scorers} leagueName={leagueName} season={season} />
+                  ) : (
+                    <EmptyState message="No scorer data available" />
+                  )}
+                </>
+              )}
+            </div>
+          </aside>
         </div>
       </main>
     </div>

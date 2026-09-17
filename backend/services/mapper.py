@@ -115,7 +115,7 @@ def map_team_summary(api_team: dict) -> TeamSummary:
         id=api_team["id"],
         name=api_team["name"],
         slug=_make_slug(api_team["name"], api_team["id"]),
-        crest_url=api_team.get("logo", ""),
+        crest_url=api_team.get("logo") or "",
     )
 
 
@@ -141,9 +141,9 @@ def map_player_summary(api_player: dict) -> PlayerSummary:
         id=api_player["id"],
         name=api_player["name"],
         slug=_make_slug(api_player["name"], api_player["id"]),
-        position=api_player.get("position", ""),
+        position=api_player.get("position") or "",
         number=api_player.get("number"),
-        nationality=api_player.get("nationality", ""),
+        nationality=api_player.get("nationality") or "",
     )
 
 
@@ -207,16 +207,16 @@ def map_match_detail(fixture: dict) -> MatchDetail:
         # Map team
         ev_team = TeamSummary(
             id=team_data.get("id", 0),
-            name=team_data.get("name", ""),
-            slug=_make_slug(team_data.get("name", ""), team_data.get("id", 0)),
-            crest_url=team_data.get("logo", ""),
+            name=team_data.get("name") or "",
+            slug=_make_slug(team_data.get("name") or "", team_data.get("id", 0)),
+            crest_url=team_data.get("logo") or "",
         )
 
         # Map player
         ev_player = PlayerSummary(
-            id=player_data.get("id", 0),
-            name=player_data.get("name", "Unknown"),
-            slug=_make_slug(player_data.get("name", ""), player_data.get("id", 0)),
+            id=player_data.get("id") or 0,
+            name=player_data.get("name") or "Unknown",
+            slug=_make_slug(player_data.get("name", ""), player_data.get("id") or 0),
             position="",
             number=None,
             nationality="",
@@ -226,7 +226,7 @@ def map_match_detail(fixture: dict) -> MatchDetail:
         ev_assist = None
         if assist_data.get("id"):
             ev_assist = PlayerSummary(
-                id=assist_data["id"],
+                id=assist_data["id"] or 0,
                 name=assist_data.get("name", "Unknown"),
                 slug=_make_slug(assist_data.get("name", ""), assist_data["id"]),
                 position="",
@@ -259,11 +259,11 @@ def map_match_detail(fixture: dict) -> MatchDetail:
                     id=p.get("id", 0),
                     name=p.get("name", "Unknown"),
                     slug=_make_slug(p.get("name", ""), p.get("id", 0)),
-                    position=p.get("pos", ""),
+                    position=p.get("pos") or "",
                     number=p.get("number"),
-                    nationality=p.get("nationality", ""),
+                    nationality=p.get("nationality") or "",
                 ),
-                position=p.get("pos", ""),
+                position=p.get("pos") or "",
                 shirt_number=p.get("number"),
                 rating=None,  # API-Football doesn't provide ratings
             )

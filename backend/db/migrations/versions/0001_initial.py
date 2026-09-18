@@ -3,7 +3,7 @@
 from datetime import datetime
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import DateTime, Integer, String, Text, Boolean, Date, Time, Float
+from sqlalchemy import DateTime, Float, Integer, String, Text, Boolean, Date, Time, ForeignKey
 
 
 # revision identifiers, used by Alembic.
@@ -30,7 +30,7 @@ def upgrade() -> None:
     op.create_table(
         "seasons",
         sa.Column("id", Integer, primary_key=True),
-        sa.Column("competition_id", Integer, nullable=False),
+        sa.Column("competition_id", Integer, ForeignKey("competitions.id"), nullable=False),
         sa.Column("label", String(50), nullable=False),
         sa.Column("start_date", DateTime, nullable=True),
         sa.Column("end_date", DateTime, nullable=True),

@@ -4,8 +4,11 @@ import os
 import sys
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env"))
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -15,10 +18,14 @@ config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL_SYNC)
 
 from db.base import Base
+import db.models  # noqa: F401 — registers all models with Base.metadata
 target_metadata = Base.metadata
 
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+if config.config_file_name is not None and os.path.exists(config.config_file_name):
+    try:
+        fileConfig(config.config_file_name)
+    except Exception:
+        pass
 
 
 def run_migrations_offline() -> None:
@@ -40,11 +47,19 @@ def run_migrations_online() -> None:
         poolclass=pool.QueuePool,
     )
     with connectable.connect() as connection:
-        connection.run_sync(do_run_migrations)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+        )
+        do_run_migrations(connection)
 
 
 def do_run_migrations(connection):
-    Base.metadata.create_all(connection)
+    context.run_migrations()
+    try:
+        connection.commit()
+    except Exception:
+        pass
 
 
 if context.is_offline_mode():

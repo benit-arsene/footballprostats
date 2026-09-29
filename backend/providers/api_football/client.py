@@ -99,6 +99,11 @@ class ApiFootballProvider(Provider):
         data = await _get("leagues")
         return data.get("response", [])
 
+    async def get_teams(self, league_id: int, season: int) -> list[dict]:
+        """Fetch all teams for a competition/season."""
+        data = await _get("teams", {"league": league_id, "season": season})
+        return data.get("response", [])
+
     async def get_season(self, competition_id: int, season_label: str) -> dict | None:
         data = await _get("fixtures/season", {"league": competition_id, "season": season_label})
         results = data.get("response", [])

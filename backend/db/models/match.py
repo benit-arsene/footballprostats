@@ -43,7 +43,7 @@ class Match(Base):
     venue: Mapped["Venue | None"] = relationship(back_populates="matches")
     referee: Mapped["Referee | None"] = relationship(back_populates="matches")
     correction_of: Mapped["Match | None"] = relationship()
-    corrections: Mapped[list["Match"]] = relationship(remote_side="id")
+    corrections: Mapped[list["Match"]] = relationship(remote_side=[id])
     events: Mapped[list["MatchEvent"]] = relationship(back_populates="match")
     lineups: Mapped[list["MatchLineup"]] = relationship(back_populates="match")
     statistics: Mapped[list["MatchStatistic"]] = relationship(back_populates="match")

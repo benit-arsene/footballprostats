@@ -6,6 +6,7 @@ from sqlalchemy import DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
+from db.models.match_event import MatchEvent
 
 
 class Player(Base):
@@ -25,7 +26,9 @@ class Player(Base):
 
     # ─── Relationships ────────────────────────────────────────────────
 
-    match_events: Mapped[list["MatchEvent"]] = relationship(back_populates="player")
+    match_events: Mapped[list["MatchEvent"]] = relationship(
+        foreign_keys=[MatchEvent.player_id], back_populates="player"
+    )
     second_match_events: Mapped[list["MatchEvent"]] = relationship(
         foreign_keys="MatchEvent.second_player_id", back_populates="second_player"
     )

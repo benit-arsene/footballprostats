@@ -104,6 +104,18 @@ class ApiFootballProvider(Provider):
         data = await _get("teams", {"league": league_id, "season": season})
         return data.get("response", [])
 
+    async def get_seasons(self, league_id: int) -> list[dict]:
+        """Fetch the season coverage list for a competition.
+
+        Returns the 'seasons' array from the leagues response, where each
+        entry has 'year', 'start', 'end', 'current', and 'coverage'.
+        """
+        data = await _get("leagues", {"id": league_id})
+        results = data.get("response", [])
+        if not results:
+            return []
+        return results[0].get("seasons", [])
+
     async def get_season(self, competition_id: int, season_label: str) -> dict | None:
         data = await _get("fixtures/season", {"league": competition_id, "season": season_label})
         results = data.get("response", [])

@@ -16,3 +16,11 @@ export const POLL_INTERVALS = {
 } as const;
 
 export const HOMEPAGE_REFRESH_INTERVAL = 150_000;
+
+/**
+ * Feature flag: disable automatic live-match polling.
+ *
+ * When false, `shouldPoll()` always returns false and the polling hooks
+ * never start their intervals. Set to true to re-enable polling.
+ */
+export const POLLING_ENABLED = false;

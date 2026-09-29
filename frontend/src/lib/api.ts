@@ -15,7 +15,7 @@ import type {
   PlayerProfile,
   LeagueProfile,
 } from "./types";
-import { API_BASE, POLL_INTERVALS } from "./constants";
+import { API_BASE, POLL_INTERVALS, POLLING_ENABLED } from "./constants";
 
 // ─── Generic fetch helper ─────────────────────────────────────────────
 
@@ -80,7 +80,11 @@ export type PollingOptions = {
 
 /**
  * Returns true if the match is in a state that should be polled.
+ *
+ * Polling is gated behind the POLLING_ENABLED feature flag so it can be
+ * disabled globally without touching the polling hooks or components.
  */
 export function shouldPoll(status: string): boolean {
+  if (!POLLING_ENABLED) return false;
   return status === "live";
 }

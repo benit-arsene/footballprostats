@@ -2,8 +2,8 @@
 
 from datetime import datetime
 
-from sqlalchemy import Integer, String, Text, DateTime, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
 
@@ -18,3 +18,7 @@ class DataSource(Base):
     quota_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # ─── Relationships ────────────────────────────────────────────────
+
+    import_jobs: Mapped[list["ImportJob"]] = relationship(back_populates="data_source")

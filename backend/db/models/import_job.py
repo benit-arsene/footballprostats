@@ -2,8 +2,8 @@
 
 from datetime import datetime
 
-from sqlalchemy import Integer, String, Text, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base import Base
 
@@ -13,7 +13,7 @@ class ImportJob(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    data_source_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    data_source_id: Mapped[int] = mapped_column(Integer, ForeignKey("data_sources.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -21,3 +21,7 @@ class ImportJob(Base):
     records_failed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # ─── Relationships ────────────────────────────────────────────────
+
+    data_source: Mapped["DataSource"] = relationship(back_populates="import_jobs")

@@ -71,7 +71,29 @@ export function getLeague(leagueId: number): Promise<LeagueProfile> {
   return apiFetch(`/api/v1/leagues/${leagueId}`);
 }
 
-// ─── Polling utilities ────────────────────────────────────────────────
+// ─── Standings endpoints (database-backed) ─────────────────────────────
+export function getStandingsBySeason(seasonId: number): Promise<{
+  season: string;
+  rows: Array<{
+    position: number;
+    team: { id: number; name: string; slug: string; crest_url: string };
+    played: number;
+    won: number;
+    drawn: number;
+    lost: number;
+    goals_for: number;
+    goals_against: number;
+    goal_difference: number;
+    points: number;
+    form: string;
+  }>;
+}> {
+  return apiFetch(`/api/v1/standings/${seasonId}`);
+}
+
+export function getSeasons(competitionId: number = 1): Promise<{ id: number; label: string }[]> {
+  return apiFetch(`/api/v1/standings/seasons?competition_id=${competitionId}`);
+}
 
 export type PollingOptions = {
   intervalMs?: number;

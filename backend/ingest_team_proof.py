@@ -33,7 +33,7 @@ from normalization.teams import normalize_team_summary  # noqa: E402
 
 
 COMPETITION_ID = 39  # Premier League
-SEASON = 2024  # supported by the configured API-Football plan
+SEASON = int(os.getenv("SEASON", "2024"))  # supported by the configured API-Football plan
 
 
 async def run() -> int:

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { extractId, extractSlugPart, isCanonicalSlug } from "@/lib/slug";
 import { getMatch } from "@/lib/api";
@@ -53,6 +54,16 @@ export default async function MatchPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
+      {/* Back navigation */}
+      <nav className="mb-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
+        >
+          <span aria-hidden="true">&larr;</span> Back
+        </Link>
+      </nav>
+
       {/* Canonical redirect hint for crawlers */}
       {!isCanonical && (
         <link

@@ -36,7 +36,7 @@ from providers.api_football.client import ApiFootballProvider  # noqa: E402
 
 
 COMPETITION_ID = 39  # Premier League
-SEASON_YEAR = 2024  # accessible on the configured API-Football plan
+SEASON_YEAR = int(os.getenv("SEASON_YEAR", "2024"))  # accessible on the configured API-Football plan
 
 
 def _season_label(year: int) -> str:

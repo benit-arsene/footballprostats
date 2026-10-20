@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from routes import matches, teams, players, leagues
+from routes import matches, teams, players, leagues, standings
 
 app = FastAPI(title="Football Pro Stats API", version="0.1.0")
 
@@ -45,7 +45,7 @@ async def validation_exception_handler(request, exc):
 app.include_router(matches.router)
 app.include_router(teams.router)
 app.include_router(players.router)
-app.include_router(leagues.router)
+app.include_router(standings.router)
 
 
 @app.get("/")

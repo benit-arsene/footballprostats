@@ -278,7 +278,11 @@ class ApiFootballAdapters:
         api_all = api_row.get("all", {})
         api_diff = api_row.get("goalsDiff", 0)
         form = api_row.get("form", "") or ""
-        form_list = [f.strip() for f in form.split(",") if f.strip()] if form else []
+        if "," in form:
+            form_list = [f.strip() for f in form.split(",") if f.strip()]
+        else:
+            form_list = [c for c in form.strip() if c]
+        form_list = form_list[-5:] if form_list else []
 
         return StandingRow(
             position=api_row.get("rank", 0),

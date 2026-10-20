@@ -21,3 +21,12 @@ PROVIDER_SELECTION: dict[str, dict[str, str]] = {
     "standings": {"primary": "api_football"},
     "top_scorers": {"primary": "api_football"},
 }
+
+# Available provider names (registered at runtime if credentials exist)
+AVAILABLE_PROVIDERS: list[str] = ["api_football", "football_data"]
+
+# football-data.org is registered but NOT selected as primary for any entity type
+# until its data quality and coverage are verified.  API-Football remains the
+# effective provider for all entity types.  To enable football-data.org for a
+# specific entity type, change the corresponding entry above, e.g.:
+#   "standings": {"primary": "football_data", "fallback": "api_football"}

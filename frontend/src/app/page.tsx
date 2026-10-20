@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { MatchSummary, MatchStatus, StandingRow, LeagueProfile } from "@/lib/types";
-import { getLiveMatchesSummary, getLeague } from "@/lib/api";
+import { getLiveMatchesSummary, getLeague, getStandingsBySeason, getSeasons } from "@/lib/api";
 import { HOME_LEAGUE_IDS, HOMEPAGE_REFRESH_INTERVAL, LEAGUE_IDS } from "@/lib/constants";
 import { MOCK_STANDINGS, MOCK_MATCHES, MOCK_TOP_SCORERS } from "@/lib/mock-data";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -397,10 +397,20 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchLeague = async () => {
       try {
-        const data = await getLeague(LEAGUE_IDS.premier_league);
-        setLeagueProfile(data);
+        const seasons = await getSeasons(1);
+        const latest = seasons.length > 0 ? seasons[seasons.length - 1] : null;
+        if (latest) {
+          const data = await getStandingsBySeason(latest.id);
+          setLeagueProfile({
+            name: "Premier League",
+            slug: "premier-league-1",
+            season: data.season,
+            standings: data.rows.slice(0, 5),
+            top_scorers: MOCK_TOP_SCORERS,
+          } as any);
+        }
       } catch {
-        // Fallback handled via MOCK_STANDINGS / MOCK_TOP_SCORERS below
+        // Fallback handled via MOCK_STANDINGS below
       } finally {
         setLeagueLoading(false);
       }

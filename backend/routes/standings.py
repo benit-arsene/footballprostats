@@ -78,6 +78,7 @@ async def get_standings_by_label(season_label: str):
                     "goals_for": r.goals_for,
                     "goals_against": r.goals_against,
                     "goal_difference": r.goal_difference,
+                    "gd": r.goal_difference,
                     "points": r.points,
                     "form": r.form,
                 }
@@ -132,6 +133,7 @@ async def get_standings_by_season(season_id: int):
                     "goals_for": r.goals_for,
                     "goals_against": r.goals_against,
                     "goal_difference": r.goal_difference,
+                    "gd": r.goal_difference,
                     "points": r.points,
                     "form": r.form,
                 }

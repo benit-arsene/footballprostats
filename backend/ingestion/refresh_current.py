@@ -33,6 +33,7 @@ from db.models.season import Season  # noqa: E402
 from db.models.standing_row import StandingRow  # noqa: E402
 from db.models.standing_snapshot import StandingSnapshot  # noqa: E402
 from db.models.team import Team  # noqa: E402
+from db.models.match import Match  # noqa: E402
 from db.session import async_session  # noqa: E402
 from persistence.repository import Repository  # noqa: E402
 from providers.factory import build_provider_registry  # noqa: E402
@@ -106,12 +107,102 @@ async def run() -> int:
         rows_raw = await provider.get_standings(COMPETITION_ID, SEASON_YEAR)
         logger.info("Fetched %s standings rows from football-data.org", len(rows_raw))
 
-        # Fetch fixtures count (lightweight, respects quota).
+        # Fetch fixtures.
+        fixtures_raw = []
         try:
-            fixtures = await provider.get_fixtures(league_id=COMPETITION_ID, season=SEASON_YEAR)
-            logger.info("Fetched %s fixtures from football-data.org", len(fixtures))
+            fixtures_raw = await provider.get_fixtures(league_id=COMPETITION_ID, season=SEASON_YEAR)
+            logger.info("Fetched %s fixtures from football-data.org", len(fixtures_raw))
         except Exception as e:
             logger.warning("Fixtures fetch failed (non-fatal): %s", e)
+
+        # Persist fixtures idempotently.
+        fx_created = 0
+        fx_reused = 0
+        fx_skipped = 0
+        for api_match in fixtures_raw:
+            fd_match_id = str(api_match.get("id"))
+            # Already mapped?
+            repo_match = Repository(Match) if False else None
+            from persistence.repository import Repository as _R
+            existing_ext = None
+            async with async_session() as session:
+                result = await session.execute(
+                    select(ExternalId).where(
+                        ExternalId.provider == "football_data",
+                        ExternalId.entity_type == "match",
+                        ExternalId.external_id == fd_match_id,
+                    )
+                )
+                existing_ext = result.scalar_one_or_none()
+
+            if existing_ext is not None:
+                fx_reused += 1
+                continue
+
+            home_fd = str((api_match.get("homeTeam") or {}).get("id"))
+            away_fd = str((api_match.get("awayTeam") or {}).get("id"))
+            home_team = await Repository(Team).get_by_external_id(
+                provider="football_data", external_id=home_fd, entity_type="team"
+            )
+            away_team = await Repository(Team).get_by_external_id(
+                provider="football_data", external_id=away_fd, entity_type="team"
+            )
+            if home_team is None or away_team is None:
+                fx_skipped += 1
+                continue
+
+            home_internal = home_team["team_id"]
+            away_internal = away_team["team_id"]
+
+            ms = FootballDataAdapters.match_summary(api_match)
+            utc_date = api_match.get("utcDate", "")
+            date_str = utc_date[:10] if utc_date else ""
+            from datetime import date as _date
+            try:
+                match_date = _date.fromisoformat(date_str) if date_str else None
+            except ValueError:
+                match_date = None
+            if match_date is None:
+                fx_skipped += 1
+                continue
+
+            score = api_match.get("score", {}) or {}
+            ft = score.get("fullTime", {}) or {}
+            status_map = {
+                "SCHEDULED": "scheduled", "TIMED": "scheduled",
+                "IN_PLAY": "live", "PAUSED": "live",
+                "FINISHED": "finished", "POSTPONED": "postponed",
+                "SUSPENDED": "postponed", "CANCELLED": "cancelled",
+            }
+            status = status_map.get(api_match.get("status", "SCHEDULED"), "scheduled")
+
+            async with async_session() as session:
+                match = Match(
+                    slug=ms.slug,
+                    competition_id=COMPETITION_ID_INTERNAL if False else competition.id,
+                    season_id=season_id,
+                    home_team_id=home_internal,
+                    away_team_id=away_internal,
+                    date=match_date,
+                    kickoff_time=None,
+                    status=status,
+                    home_score=ft.get("home") or 0,
+                    away_score=ft.get("away") or 0,
+                )
+                session.add(match)
+                await session.flush()
+                mid = match.id
+                ext = ExternalId(
+                    entity_type="match",
+                    provider="football_data",
+                    external_id=fd_match_id,
+                    match_id=mid,
+                )
+                session.add(ext)
+                await session.commit()
+            fx_created += 1
+
+        logger.info("Fixtures persistence: created=%s reused=%s skipped=%s", fx_created, fx_reused, fx_skipped)
 
         if not rows_raw:
             logger.warning("No standings rows returned; preserving existing data")

@@ -96,7 +96,7 @@ function Header() {
           {["Live", "Fixtures", "Results", "Standings", "Players"].map((item) => (
             <a
               key={item}
-              href="#"
+              href={item === "Standings" ? "/standings" : "#"}
               className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-black"
             >
               {item}

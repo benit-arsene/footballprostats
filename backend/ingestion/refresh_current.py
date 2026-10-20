@@ -31,12 +31,15 @@ from db.models.competition import Competition  # noqa: E402
 from db.models.external_id import ExternalId  # noqa: E402
 from db.models.season import Season  # noqa: E402
 from db.models.standing_row import StandingRow  # noqa: E402
-from db.models.standing_snapshot import StandingSnapshot  # noqa: E402
 from db.models.team import Team  # noqa: E402
+from db.models.standing_snapshot import StandingSnapshot  # noqa: E402
+from db.models.player import Player  # noqa: E402
+from db.models.player_season_stat import PlayerSeasonStat  # noqa: E402
 from db.models.match import Match  # noqa: E402
 from db.session import async_session  # noqa: E402
 from persistence.repository import Repository  # noqa: E402
 from providers.factory import build_provider_registry  # noqa: E402
+from providers.api_football.client import ApiFootballProvider  # noqa: E402
 from providers.football_data.adapters import FootballDataAdapters  # noqa: E402
 from providers.routing import route_provider  # noqa: E402
 
@@ -115,7 +118,65 @@ async def run() -> int:
         except Exception as e:
             logger.warning("Fixtures fetch failed (non-fatal): %s", e)
 
-        # Persist fixtures idempotently.
+        # Fetch and persist top scorers via API-Football (richer stats).
+        ts_created = 0
+        ts_reused = 0
+        ts_skipped = 0
+        try:
+            ts_raw = await provider.get_top_scorers(COMPETITION_ID, SEASON_YEAR)
+            logger.info("Fetched %s top scorers from football-data.org", len(ts_raw))
+        except Exception as e:
+            logger.warning("Top scorers fetch failed (non-fatal): %s", e)
+            ts_raw = []
+
+        for entry in ts_raw:
+            player_info = entry.get("player", {}) or {}
+            fd_player_id = str(player_info.get("id"))
+            goals = entry.get("goals") or 0
+            assists = entry.get("assists") or 0
+            # football-data doesn't provide appearances in scorers endpoint
+            appearances = 0
+
+            repo_player = Repository(Player)
+            existing_player = await repo_player.get_by_external_id(
+                provider="football_data", external_id=fd_player_id, entity_type="player"
+            )
+            if existing_player is None:
+                logger.warning("No player mapping for football_data id=%s (%s) — skipping", fd_player_id, player_info.get("name"))
+                ts_skipped += 1
+                continue
+            internal_player_id = existing_player["player_id"]
+
+            async with async_session() as session:
+                result = await session.execute(
+                    select(PlayerSeasonStat).where(
+                        PlayerSeasonStat.player_id == internal_player_id,
+                        PlayerSeasonStat.season_id == season_id,
+                        PlayerSeasonStat.competition_id == competition.id,
+                    )
+                )
+                existing_stat = result.scalar_one_or_none()
+                if existing_stat is not None:
+                    if goals and not existing_stat.goals:
+                        existing_stat.goals = goals
+                    if assists and not existing_stat.assists:
+                        existing_stat.assists = assists
+                    await session.commit()
+                    ts_reused += 1
+                    continue
+                pss = PlayerSeasonStat(
+                    player_id=internal_player_id,
+                    season_id=season_id,
+                    competition_id=competition.id,
+                    goals=goals,
+                    assists=assists,
+                    appearances=appearances,
+                )
+                session.add(pss)
+                await session.commit()
+                ts_created += 1
+
+        logger.info("Top scorers persistence: created=%s reused=%s skipped=%s", ts_created, ts_reused, ts_skipped)
         fx_created = 0
         fx_reused = 0
         fx_skipped = 0

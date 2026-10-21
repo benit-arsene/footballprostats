@@ -47,16 +47,25 @@ def _scorers_season_label(payload: dict) -> str | None:
     return f"{start_year}/{start_year + 1}"
 
 
-# In-memory cache for live top scorers (90-minute TTL)
-_SCORERS_CACHE = {"data": None, "ts": 0.0}
+# In-memory cache for live top scorers (90-minute TTL), keyed by competition id.
+_SCORERS_CACHE = {}
 _SCORERS_TTL = 5400
 
 
 @router.get("/top-scorers-live")
-async def get_live_top_scorers():
+async def get_live_top_scorers(competition_id: int = 39):
+    from providers.football_data.adapters import COMPETITION_CODE_MAP
+
+    if competition_id not in COMPETITION_CODE_MAP:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "UNSUPPORTED_COMPETITION", "message": f"Unsupported competition id: {competition_id}"}},
+        )
+
     now = time.time()
-    if _SCORERS_CACHE["data"] is not None and (now - _SCORERS_CACHE["ts"]) < _SCORERS_TTL:
-        return _SCORERS_CACHE["data"]
+    cached = _SCORERS_CACHE.get(competition_id)
+    if cached is not None and (now - cached["ts"]) < _SCORERS_TTL:
+        return cached["data"]
     try:
         from providers.factory import build_provider_registry
 
@@ -65,7 +74,7 @@ async def get_live_top_scorers():
         if "football_data" not in available:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "football-data.org not configured"}})
         provider = registry.get_provider("football_data")
-        payload = await provider.get_top_scorers_payload(39, get_season_year())
+        payload = await provider.get_top_scorers_payload(competition_id, get_season_year())
         raw = payload.get("scorers", [])
         if not raw:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "No scorers available"}})
@@ -107,8 +116,7 @@ async def get_live_top_scorers():
             "goals_total": goals_total,
             "scorers": rows,
         }
-        _SCORERS_CACHE["data"] = data
-        _SCORERS_CACHE["ts"] = now
+        _SCORERS_CACHE[competition_id] = {"data": data, "ts": now}
         return data
     except HTTPException:
         raise

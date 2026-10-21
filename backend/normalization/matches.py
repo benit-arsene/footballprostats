@@ -28,12 +28,21 @@ __all__ = [
 ]
 
 
+def _is_football_data_match(data: dict) -> bool:
+    """True when the payload uses the football-data.org v4 match shape."""
+    return "homeTeam" in data and "utcDate" in data
+
+
 def normalize_match_summary(data: dict) -> MatchSummary:
     """Normalize a fixture dict into a canonical MatchSummary.
 
-    Accepts API-Football fixture format (as produced by adapters).
-    Future: can accept other provider formats and converge to same output.
+    Accepts API-Football fixture format (as produced by adapters) and the
+    football-data.org v4 match format. Both converge to the same output.
     """
+    if _is_football_data_match(data):
+        from providers.football_data.adapters import FootballDataAdapters
+        return FootballDataAdapters.match_summary(data)
+
     from providers.api_football.adapters import ApiFootballAdapters
     return ApiFootballAdapters.match_summary(data)
 

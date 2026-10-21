@@ -72,7 +72,9 @@ function LiveTicker({ matches }: { matches: MatchSummary[] }) {
               href={`/matches/${m.slug}`}
               className="flex items-center gap-2 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs hover:border-zinc-400 transition-colors"
             >
-              <span className="font-bold text-red-600 tabular-nums">{m.minute}&apos;</span>
+              {m.minute != null && (
+                <span className="font-bold text-red-600 tabular-nums">{m.minute}&apos;</span>
+              )}
               <span className="font-semibold text-zinc-800">{m.home_team.name} {m.home_score} - {m.away_score} {m.away_team.name}</span>
             </a>
           ))}
@@ -135,7 +137,9 @@ function MatchCard({ match }: { match: MatchSummary }) {
         {isLive && (
           <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500 px-1.5 py-px">
             <span className="text-[9px] font-bold text-white">LIVE</span>
-            <span className="text-[9px] font-bold tabular-nums text-white">{match.minute}&apos;</span>
+            {match.minute != null && (
+              <span className="text-[9px] font-bold tabular-nums text-white">{match.minute}&apos;</span>
+            )}
           </span>
         )}
         {isFinished && (
@@ -429,9 +433,19 @@ export default function Dashboard() {
     fetchScorers();
   }, []);
 
+  const today = new Date();
+  const headingDate = new Date(today);
+  headingDate.setDate(headingDate.getDate() + activeTab - 3);
+  const isToday = headingDate.toDateString() === today.toDateString();
+  const headingText = isToday
+    ? "Today's Matches"
+    : headingDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const selectedDate = `${headingDate.getFullYear()}-${String(headingDate.getMonth() + 1).padStart(2, "0")}-${String(headingDate.getDate()).padStart(2, "0")}`;
+
   // Merge: real API matches first, then mock for leagues not in API
   const mockOnly = MOCK_MATCHES.filter((m) => !HOME_LEAGUE_IDS.has(m.league.id));
-  const matches = [...liveMatches, ...mockOnly];
+  const apiMatches = liveMatches.filter((m) => m.status === "live" || m.date === selectedDate);
+  const matches = [...apiMatches, ...mockOnly];
 
   const grouped = useMemo(() => groupByLeague(matches), [matches]);
   const liveCount = matches.filter((m) => m.status === "live").length;
@@ -442,14 +456,6 @@ export default function Dashboard() {
   const scorers = liveScorers.length > 0 ? liveScorers : [];
   const leagueName = leagueProfile?.name ?? "Premier League";
   const season = leagueProfile?.season ?? "25/26";
-
-  const today = new Date();
-  const headingDate = new Date(today);
-  headingDate.setDate(headingDate.getDate() + activeTab - 3);
-  const isToday = headingDate.toDateString() === today.toDateString();
-  const headingText = isToday
-    ? "Today's Matches"
-    : headingDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   return (
     <div className="min-h-screen bg-white">

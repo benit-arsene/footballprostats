@@ -1,5 +1,8 @@
 """football-data.org adapters — raw JSON → canonical Pydantic models."""
 
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
 from models import (
     LeagueSummary,
     TeamSummary,
@@ -22,6 +25,42 @@ COMPETITION_CODE_MAP: dict[int, str] = {
 
 # Reverse mapping
 CODE_TO_COMPETITION_ID: dict[str, int] = {v: k for k, v in COMPETITION_CODE_MAP.items()}
+
+# Timezone per competition code. football-data.org publishes kickoffs in UTC;
+# the canonical model stores local kickoff times, so they are converted here.
+COMPETITION_TIMEZONE: dict[str, str] = {
+    "PL": "Europe/London",
+    "PD": "Europe/Madrid",
+    "BL1": "Europe/Berlin",
+    "SA": "Europe/Rome",
+    "FL1": "Europe/Paris",
+    "CL": "Europe/Zurich",
+}
+
+
+def _competition_zone(competition_code: str) -> ZoneInfo | timezone:
+    """Return the competition's timezone, falling back to UTC when unknown."""
+    name = COMPETITION_TIMEZONE.get(competition_code)
+    if not name:
+        return timezone.utc
+    try:
+        return ZoneInfo(name)
+    except Exception:
+        return timezone.utc
+
+
+def _local_kickoff(utc_date: str, competition_code: str) -> tuple[str, str]:
+    """Convert a UTC kickoff timestamp into local (date, HH:MM) for a competition."""
+    if not utc_date:
+        return "", ""
+    try:
+        moment = datetime.fromisoformat(utc_date.replace("Z", "+00:00"))
+    except ValueError:
+        return utc_date[:10], (utc_date[11:16] if len(utc_date) >= 16 else "")
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    local = moment.astimezone(_competition_zone(competition_code))
+    return local.strftime("%Y-%m-%d"), local.strftime("%H:%M")
 
 
 def _status_map(api_status: str) -> MatchStatus:
@@ -103,8 +142,7 @@ class FootballDataAdapters:
         )
 
         utc_date = api_match.get("utcDate", "")
-        date_str = utc_date[:10] if utc_date else ""
-        kickoff = utc_date[11:16] if len(utc_date) >= 16 else ""
+        date_str, kickoff = _local_kickoff(utc_date, comp.get("code", ""))
 
         return MatchSummary(
             id=fixture_id,

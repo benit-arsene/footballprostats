@@ -37,12 +37,20 @@ async def get_fixture(fixture_id: int) -> dict | None:
     return await _api_football.get_fixture(fixture_id)
 
 
-async def get_live_fixtures(league_id: int | None = None) -> list[dict]:
-    return await _api_football.get_fixtures(league_id=league_id)
+async def get_live_fixtures(league_id: int | None = None, season: int | None = None) -> list[dict]:
+    """Fixtures for a league, routed by the provider policy.
+
+    The season decides the provider: the current season is served by
+    football-data.org, historical seasons by API-Football.
+    """
+    p = _provider_for("match", season=season, data_type="fixtures")
+    return await p.get_fixtures(league_id=league_id, season=season)
 
 
-async def get_fixtures_by_date(date: str, league_id: int | None = None) -> list[dict]:
-    return await _api_football.get_fixtures(date=date, league_id=league_id)
+async def get_fixtures_by_date(date: str, league_id: int | None = None, season: int | None = None) -> list[dict]:
+    """Fixtures played on a given date, routed by the provider policy."""
+    p = _provider_for("match", season=season, data_type="fixtures")
+    return await p.get_fixtures(date=date, league_id=league_id, season=season)
 
 
 async def get_fixtures_by_team(team_id: int, season: int, league_id: int | None = None) -> list[dict]:

@@ -54,7 +54,7 @@ async def get_league_profile(league_id: int):
             from datetime import date
 
             today = date.today().isoformat()
-            fixtures_data = await football_api.get_fixtures_by_date(today, league_id)
+            fixtures_data = await football_api.get_fixtures_by_date(today, league_id, season=season)
             fixtures = [map_match_summary(f) for f in fixtures_data[:20]]
         except Exception:
             fixtures = []

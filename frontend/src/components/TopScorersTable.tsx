@@ -234,7 +234,31 @@ function clubCode(team?: ScorerInput["team"]): string {
     .filter(Boolean)
     .map((word) => word[0])
     .join("");
+
   return letters.slice(0, 3).toUpperCase() || DASH;
+}
+
+const WEEKDAY_CODES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_CODES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+function kickoffLabel(date: string, time: string): string {
+  const [year, month, day] = date.split("-").map((part) => Number(part));
+  if (!year || !month || !day) return `${date} ${time}`.trim();
+  const weekday = WEEKDAY_CODES[new Date(year, month - 1, day).getDay()];
+  return `${weekday} ${day} ${MONTH_CODES[month - 1]} ${time}`;
 }
 
 const POSITION_CODES: Array<[RegExp, string]> = [
@@ -643,15 +667,23 @@ export default function TopScorersTable({
         .filter(
           (match) =>
             match.league?.name === "Premier League" &&
-            (match.status === "live" || match.status === "finished"),
+            (match.status === "live" || match.status === "scheduled"),
         )
         .slice(0, 4)
         .map((match) => ({
           id: match.id,
-          score: `${clubCode({ name: match.home_team.name })} ${match.home_score ?? 0}${EN_DASH}${
-            match.away_score ?? 0
-          } ${clubCode({ name: match.away_team.name })}`,
-          detail: match.status === "live" ? `${match.minute ?? 0}' Live` : "Full time",
+          score:
+            match.status === "live"
+              ? `${clubCode({ name: match.home_team.name })} ${match.home_score ?? 0}${EN_DASH}${
+                  match.away_score ?? 0
+                } ${clubCode({ name: match.away_team.name })}`
+              : `${clubCode({ name: match.home_team.name })} v ${clubCode({ name: match.away_team.name })}`,
+          detail:
+            match.status === "live"
+              ? match.minute != null
+                ? `${match.minute}' Live`
+                : "Live"
+              : kickoffLabel(match.date, match.kickoff_time),
         })),
     [highlights],
   );

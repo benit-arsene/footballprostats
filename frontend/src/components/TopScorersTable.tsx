@@ -887,14 +887,6 @@ export default function TopScorersTable({
         {/* Editorial header */}
         <header className="flex flex-col justify-between gap-space-lg py-space-sm lg:flex-row lg:items-end">
           <div className="flex max-w-[768px] flex-col gap-space-xs">
-            <div className="flex flex-wrap items-center gap-space-sm">
-              <span className="rounded-chip bg-primary px-space-sm py-0.5 font-label-sm text-label-sm uppercase tracking-widest text-on-primary">
-                Official Award Tracker
-              </span>
-              <span className="font-label-md text-label-md uppercase tracking-widest text-secondary">
-                {seasonValue} Season{updatedLabel ? ` • Updated ${updatedLabel}` : ""}
-              </span>
-            </div>
             <h1 className="font-headline-xl text-headline-xl uppercase tracking-tight text-primary">
               Premier League Top Scorers
             </h1>

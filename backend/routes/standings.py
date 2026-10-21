@@ -7,6 +7,7 @@ Endpoints:
 
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
+from config import get_season_year
 
 from db.models.competition import Competition
 from db.models.season import Season
@@ -44,7 +45,7 @@ async def get_live_top_scorers():
         if "football_data" not in available:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "football-data.org not configured"}})
         provider = registry.get_provider("football_data")
-        raw = await provider.get_top_scorers(39, 2026)
+        raw = await provider.get_top_scorers(39, get_season_year())
         if not raw:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "No scorers available"}})
         rows = []
@@ -101,7 +102,7 @@ async def get_live_standings():
         if "football_data" not in available:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "football-data.org not configured"}})
         provider = registry.get_provider("football_data")
-        rows_raw = await provider.get_standings(39, 2026)
+        rows_raw = await provider.get_standings(39, get_season_year())
         if not rows_raw:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "No standings available"}})
         data = {

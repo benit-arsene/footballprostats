@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import TopScorersTable, { type ScorerInput } from "@/components/TopScorersTable";
 import { getLiveMatchesSummary, getLiveTopScorersWithLatency } from "@/lib/api";
-import { MOCK_MATCHES, MOCK_TOP_SCORERS } from "@/lib/mock-data";
 import type { MatchSummary } from "@/lib/types";
 
 // The golden boot race changes with every matchweek — never bake a snapshot in.
@@ -31,13 +30,12 @@ export default async function TopScorersPage() {
     updatedAt = scorersResult.value.data.last_updated ?? null;
     latencyMs = scorersResult.value.latencyMs;
   } else {
-    // The stadium feed is unreachable — keep the page useful with the cached snapshot.
-    scorers = MOCK_TOP_SCORERS;
+    scorers = [];
     feed = "snapshot";
   }
 
   const highlights: MatchSummary[] =
-    matchesResult.status === "fulfilled" ? matchesResult.value : MOCK_MATCHES;
+    matchesResult.status === "fulfilled" ? matchesResult.value : [];
 
   return (
     <main className="scorers-canvas min-h-screen w-full bg-surface font-body-md text-on-surface">

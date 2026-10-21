@@ -222,6 +222,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="both",
         help="Which entity types to process (default: both).",
     )
+    parser.add_argument(
+        "--player-ids",
+        nargs="*",
+        type=int,
+        default=None,
+        help="Optional internal player IDs to process (verified api_football mapping required).",
+    )
     args = parser.parse_args(argv)
 
     if args.fetch and not args.apply:
@@ -234,12 +241,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 # ─── Data access ──────────────────────────────────────────────────────────
 
 
-async def load_targets(targets: str) -> IngestPlan:
+async def load_targets(targets: str, player_ids: list[int] | None = None) -> IngestPlan:
     """Resolve ingestion targets from the existing provider-ID mappings."""
     players: list[PlayerTarget] = []
     teams: list[TeamTarget] = []
 
     async with async_session() as session:
+        selected = set(player_ids or [])
         if targets in ("players", "both"):
             rows = (await session.execute(
                 select(ExternalId, Player)
@@ -257,6 +265,7 @@ async def load_targets(targets: str) -> IngestPlan:
                     has_photo=bool(player.photo_url),
                 )
                 for ext, player in rows
+                if not selected or player.id in selected
             ]
 
         if targets in ("teams", "both"):
@@ -382,6 +391,23 @@ async def ingest_players(
                     pass
             continue
 
+        profile_player_id = ((payload or {}).get("player") or {}).get("id")
+        if profile_player_id is None or int(profile_player_id) != int(target.api_player_id):
+            stats.players_skipped += 1
+            logger.warning(
+                "Player %s: upstream profile identity mismatch or missing (expected api id %s, got %s)",
+                target.name,
+                target.api_player_id,
+                profile_player_id,
+            )
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
+            continue
+
         photo = ((payload or {}).get("player") or {}).get("photo")
         if not photo:
             stats.players_skipped += 1
@@ -495,7 +521,7 @@ async def run(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
     try:
-        plan = await load_targets(args.targets)
+        plan = await load_targets(args.targets, args.player_ids)
     except SQLAlchemyError as e:
         logger.error(
             "Could not read the ingestion plan: %s. If players.photo_url is missing, "

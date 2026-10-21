@@ -28,7 +28,7 @@ router = APIRouter(prefix="/api/v1/standings", tags=["standings"])
 
 # In-memory cache for live top scorers (60-minute TTL)
 _SCORERS_CACHE = {"data": None, "ts": 0.0}
-_SCORERS_TTL = 3600
+_SCORERS_TTL = 5400
 
 
 @router.get("/top-scorers-live")
@@ -52,10 +52,26 @@ async def get_live_top_scorers():
             player = r.get("player", {}) or {}
             team = r.get("team", {}) or {}
             rows.append({
-                "player": {"name": player.get("name", ""), "id": player.get("id")},
-                "team": {"name": team.get("name", ""), "id": team.get("id")},
+                "player": {
+                    "name": player.get("name", ""),
+                    "id": player.get("id"),
+                    "position": player.get("position"),
+                    "section": player.get("section"),
+                    "nationality": player.get("nationality"),
+                    "shirt_number": player.get("shirtNumber"),
+                    "date_of_birth": player.get("dateOfBirth"),
+                },
+                "team": {
+                    "name": team.get("name", ""),
+                    "id": team.get("id"),
+                    "short_name": team.get("shortName"),
+                    "tla": team.get("tla"),
+                    "crest_url": team.get("crest"),
+                },
+                "played_matches": r.get("playedMatches"),
                 "goals": r.get("goals"),
                 "assists": r.get("assists"),
+                "penalties": r.get("penalties"),
             })
         data = {
             "season": "2026/2027",

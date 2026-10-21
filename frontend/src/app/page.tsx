@@ -418,7 +418,7 @@ export default function Dashboard() {
         const data = await getLiveTopScorers();
         setLiveScorers(data.scorers || []);
       } catch {
-        setScorers([]);
+        setLiveScorers([]);
       } finally {
         setScorersLoading(false);
       }

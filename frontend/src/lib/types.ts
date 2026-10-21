@@ -123,6 +123,36 @@ export interface TopScorer {
   assists: number;
 }
 
+/**
+ * A row from `GET /api/v1/standings/top-scorers-live`.
+ *
+ * football-data.org reports appearances, penalties and player/team identity
+ * but not minutes, xG, shots or recent form — those stay `null` until the
+ * Opta pipeline is wired in, and the UI renders them as dashes.
+ */
+export interface LiveTopScorer {
+  player: {
+    id: number | null;
+    name: string;
+    position: string | null;
+    section: string | null;
+    nationality: string | null;
+    shirt_number: number | null;
+    date_of_birth: string | null;
+  };
+  team: {
+    id: number | null;
+    name: string;
+    short_name: string | null;
+    tla: string | null;
+    crest_url: string | null;
+  };
+  played_matches: number | null;
+  goals: number | null;
+  assists: number | null;
+  penalties: number | null;
+}
+
 // ─── Match ────────────────────────────────────────────────────────────
 
 export interface MatchSummary {

@@ -120,7 +120,14 @@ def test_fetch_run_stores_photos_and_respects_budget(monkeypatch):
     monkeypatch.setattr(ii, "load_targets", fake_load)
     monkeypatch.setattr(ii.ApiFootballProvider, "get_player_profile", fake_profile)
     monkeypatch.setattr(ii, "_set_player_photo", fake_set_photo)
-    monkeypatch.setattr(ii, "_set_team_crest", fake_set_crest)
+    class _FakeLedger:
+        daily_cap = 100
+        async def reserve(self, session):
+            return True
+        async def reconcile(self, session, *, consumed=True):
+            return None
+
+    monkeypatch.setattr(ii, "QuotaLedger", lambda *a, **k: _FakeLedger())
 
     result = asyncio.run(ii.run(["--apply", "--fetch", "--max-requests", "1"]))
 

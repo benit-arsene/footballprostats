@@ -29,8 +29,7 @@ import logging
 import os
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime
-
+from datetime import datetime, date, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
@@ -45,6 +44,7 @@ from sqlalchemy.exc import SQLAlchemyError  # noqa: E402
 
 from db.models.external_id import ExternalId  # noqa: E402
 from db.models.player import Player  # noqa: E402
+from db.models.image_ingestion_quota import ImageIngestionQuota  # noqa: E402
 from db.models.team import Team  # noqa: E402
 from db.session import async_session  # noqa: E402
 from providers.api_football.client import (  # noqa: E402
@@ -124,6 +124,51 @@ class RequestBudget:
             return False
         self.used += 1
         return True
+
+
+class QuotaLedger:
+    """Persistent, UTC-day-scoped quota ledger backed by the database."""
+
+    def __init__(self, daily_cap: int) -> None:
+        self.daily_cap = min(daily_cap, DAILY_REQUEST_BUDGET)
+
+    @staticmethod
+    def utc_today() -> date:
+        return datetime.now(timezone.utc).date()
+
+    async def reserve(self, session) -> bool:
+        """Atomically reserve one slot for today. Returns False if cap reached."""
+        from sqlalchemy import select
+        today = self.utc_today()
+        async with session.begin():
+            row = (await session.execute(
+                select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
+            )).scalar_one_or_none()
+            if row is None:
+                row = ImageIngestionQuota(utc_date=today, daily_cap=self.daily_cap, reserved=0, used=0)
+                session.add(row)
+                await session.flush()
+            if row.reserved + row.used >= row.daily_cap:
+                return False
+            row.reserved += 1
+            row.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        return True
+
+    async def reconcile(self, session, *, consumed: bool) -> None:
+        """Move one reservation to used (if consumed) or release it."""
+        from sqlalchemy import select
+        today = self.utc_today()
+        async with session.begin():
+            row = (await session.execute(
+                select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
+            )).scalar_one_or_none()
+            if row is None:
+                return
+            if row.reserved > 0:
+                row.reserved -= 1
+            if consumed and row.used < row.daily_cap:
+                row.used += 1
+            row.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 # ─── CLI ───────────────────────────────────────────────────────────────────
@@ -262,6 +307,7 @@ async def ingest_players(
     plan: IngestPlan,
     provider: ApiFootballProvider,
     budget: RequestBudget,
+    ledger=None,
 ) -> RunStats:
     """Fetch and store player photos for players that do not have one yet."""
     stats = RunStats()
@@ -273,30 +319,72 @@ async def ingest_players(
                 budget.used,
             )
             break
+        if ledger is not None:
+            try:
+                async with async_session() as sess:
+                    ok = await ledger.reserve(sess)
+            except Exception as e:  # noqa: BLE001
+                logger.error("Quota accounting unavailable; aborting: %s", e)
+                stats.aborted_reason = "quota accounting unavailable"
+                break
+            if not ok:
+                stats.aborted_reason = "daily quota exhausted"
+                logger.warning("Daily image-ingestion quota exhausted; stopping.")
+                break
         try:
             payload = await provider.get_player_profile(int(target.api_player_id))
         except APIRateLimitError:
             stats.aborted_reason = "upstream rate limit (HTTP 429)"
             logger.error("Upstream rate limit reached; stopping. Progress so far is stored.")
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             break
         except APIInvalidResponseError as e:
             stats.aborted_reason = f"upstream rejected the request: {e}"
             logger.error("Upstream rejected the request (%s); stopping.", e)
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             break
         except APIError as e:
             stats.players_failed += 1
             logger.warning("Player %s (api id %s) failed: %s", target.name, target.api_player_id, e)
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             continue
 
         photo = ((payload or {}).get("player") or {}).get("photo")
         if not photo:
             stats.players_skipped += 1
             logger.info("Player %s has no photo URL upstream", target.name)
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             continue
 
         await _set_player_photo(target.player_id, photo)
         stats.players_updated += 1
         logger.info("Stored photo for player %s (id %s)", target.name, target.player_id)
+        if ledger is not None:
+            try:
+                async with async_session() as sess:
+                    await ledger.reconcile(sess, consumed=True)
+            except Exception:  # noqa: BLE001
+                pass
     return stats
 
 
@@ -304,6 +392,7 @@ async def ingest_teams(
     plan: IngestPlan,
     provider: ApiFootballProvider,
     budget: RequestBudget,
+    ledger=None,
 ) -> RunStats:
     """Fetch and store team crests for teams that do not have one yet."""
     stats = RunStats()
@@ -315,30 +404,72 @@ async def ingest_teams(
                 budget.used,
             )
             break
+        if ledger is not None:
+            try:
+                async with async_session() as sess:
+                    ok = await ledger.reserve(sess)
+            except Exception as e:  # noqa: BLE001
+                logger.error("Quota accounting unavailable; aborting: %s", e)
+                stats.aborted_reason = "quota accounting unavailable"
+                break
+            if not ok:
+                stats.aborted_reason = "daily quota exhausted"
+                logger.warning("Daily image-ingestion quota exhausted; stopping.")
+                break
         try:
             payload = await provider.get_team(int(target.api_team_id))
         except APIRateLimitError:
             stats.aborted_reason = "upstream rate limit (HTTP 429)"
             logger.error("Upstream rate limit reached; stopping. Progress so far is stored.")
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             break
         except APIInvalidResponseError as e:
             stats.aborted_reason = f"upstream rejected the request: {e}"
             logger.error("Upstream rejected the request (%s); stopping.", e)
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             break
         except APIError as e:
             stats.teams_failed += 1
             logger.warning("Team %s (api id %s) failed: %s", target.name, target.api_team_id, e)
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             continue
 
         logo = ((payload or {}).get("team") or {}).get("logo")
         if not logo:
             stats.teams_skipped += 1
             logger.info("Team %s has no logo URL upstream", target.name)
+            if ledger is not None:
+                try:
+                    async with async_session() as sess:
+                        await ledger.reconcile(sess, consumed=True)
+                except Exception:  # noqa: BLE001
+                    pass
             continue
 
         await _set_team_crest(target.team_id, logo)
         stats.teams_updated += 1
         logger.info("Stored crest for team %s (id %s)", target.name, target.team_id)
+        if ledger is not None:
+            try:
+                async with async_session() as sess:
+                    await ledger.reconcile(sess, consumed=True)
+            except Exception:  # noqa: BLE001
+                pass
     return stats
 
 
@@ -385,11 +516,12 @@ async def run(argv: list[str] | None = None) -> int:
         return 0
 
     budget = RequestBudget(args.max_requests)
+    ledger = QuotaLedger(args.max_requests)
     provider = ApiFootballProvider()
     stats = RunStats()
 
     if args.targets in ("players", "both"):
-        player_stats = await ingest_players(plan, provider, budget)
+        player_stats = await ingest_players(plan, provider, budget, ledger)
         stats.players_updated = player_stats.players_updated
         stats.players_skipped = player_stats.players_skipped
         stats.players_failed = player_stats.players_failed
@@ -397,7 +529,7 @@ async def run(argv: list[str] | None = None) -> int:
             stats.aborted_reason = player_stats.aborted_reason
 
     if args.targets in ("teams", "both") and not stats.aborted_reason:
-        team_stats = await ingest_teams(plan, provider, budget)
+        team_stats = await ingest_teams(plan, provider, budget, ledger)
         stats.teams_updated = team_stats.teams_updated
         stats.teams_skipped = team_stats.teams_skipped
         stats.teams_failed = team_stats.teams_failed

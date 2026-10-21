@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { extractId } from "@/lib/slug";
 import { getTeam } from "@/lib/api";
+import TeamCrest from "@/components/TeamCrest";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -34,8 +35,7 @@ export default async function TeamPage({ params }: Props) {
     <div className="mx-auto max-w-5xl px-4 py-8">
       {/* ─── Team Header ─────────────────────────────────────── */}
       <header className="mb-8 flex items-center gap-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={team.crest_url} alt="" className="h-20 w-20" />
+        <TeamCrest url={team.crest_url} alt={team.name} className="h-20 w-20 object-contain" fallback={<div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 text-sm font-bold text-zinc-500">{team.name.slice(0, 2).toUpperCase()}</div>} />
         <div>
           <h1 className="text-3xl font-bold">{team.name}</h1>
           <p className="text-zinc-500">

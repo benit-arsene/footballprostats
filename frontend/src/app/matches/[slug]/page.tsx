@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { extractId, extractSlugPart, isCanonicalSlug } from "@/lib/slug";
 import { getMatch } from "@/lib/api";
+import TeamCrest from "@/components/TeamCrest";
 import { MOCK_MATCH_DETAILS } from "@/lib/mock-matches";
 import { MatchContent } from "./match-content";
 
@@ -78,14 +79,7 @@ export default async function MatchPage({ params }: Props) {
         <div className="flex items-center justify-center gap-4">
           {/* Home */}
           <div className="flex items-center gap-3">
-            {match.home_team.crest_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={match.home_team.crest_url} alt="" className="h-10 w-10" />
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-500">
-                {match.home_team.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-              </div>
-            )}
+            <TeamCrest url={match.home_team.crest_url} alt={match.home_team.name} className="h-10 w-10 object-contain" fallback={<div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-500">{match.home_team.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</div>} />
             <span className="text-xl font-bold text-zinc-800">{match.home_team.name}</span>
           </div>
 
@@ -97,14 +91,7 @@ export default async function MatchPage({ params }: Props) {
           {/* Away */}
           <div className="flex items-center gap-3">
             <span className="text-xl font-bold text-zinc-800">{match.away_team.name}</span>
-            {match.away_team.crest_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={match.away_team.crest_url} alt="" className="h-10 w-10" />
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-500">
-                {match.away_team.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-              </div>
-            )}
+            <TeamCrest url={match.away_team.crest_url} alt={match.away_team.name} className="h-10 w-10 object-contain" fallback={<div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-500">{match.away_team.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</div>} />
           </div>
         </div>
 

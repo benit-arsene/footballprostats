@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import TeamCrest from "@/components/TeamCrest";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MatchSummary } from "@/lib/types";
 
@@ -50,6 +51,7 @@ type ScorerRow = {
   initials: string;
   club: string;
   clubCode: string;
+  clubCrest: string | null;
   nation: string;
   nationCode: string;
   position: string;
@@ -364,6 +366,7 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
       initials: initials(name),
       club: scorer.team?.name?.trim() || "Unknown club",
       clubCode: clubCode(scorer.team),
+      clubCrest: scorer.team?.crest_url ?? null,
       nation: scorer.player?.nationality?.trim() || "Unknown",
       nationCode: nationCode(scorer.player?.nationality),
       position: position.label,
@@ -1299,6 +1302,7 @@ export default function TopScorersTable({
 
                     <td className="px-space-md">
                       <div className="flex items-center gap-1.5 font-body-sm text-body-sm text-primary">
+                        <TeamCrest url={row.clubCrest} alt={row.club} className="h-4 w-4 shrink-0 object-contain" />
                         <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-pill bg-surface-container text-[9px] font-bold">
                           {row.clubCode}
                         </span>

@@ -724,7 +724,7 @@ export default function TopScorersTable({
   }
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col gap-space-lg">
       {/* ─── Matchweek context bar ─────────────────────────────────── */}
       <section className="w-full bg-surface-container-low py-space-xs shadow-sm">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between px-margin-desktop md:px-margin-wide">
@@ -809,15 +809,11 @@ export default function TopScorersTable({
         </div>
 
         {/* Editorial header */}
-        <header className="flex flex-col justify-between gap-space-lg py-space-sm lg:flex-row lg:items-end">
+        <header className="flex flex-col justify-between gap-space-lg py-space-sm lg:flex-row lg:items-end mb-space-lg">
           <div className="flex max-w-[768px] flex-col gap-space-xs">
             <h1 className="font-headline-xl text-headline-xl uppercase tracking-tight text-primary">
               Premier League Top Scorers
             </h1>
-            <p className="font-body-lg text-body-lg text-secondary">
-              Official Premier League scoring records — goals, appearances, assists and penalties
-              as published by the official football-data.org feed for every recorded goalscorer.
-            </p>
           </div>
 
           {/* Quick export and configuration toolset */}
@@ -1252,7 +1248,7 @@ export default function TopScorersTable({
                   <tr
                     key={row.id}
                     onClick={() => setSelectedId(row.id)}
-                    className={`h-11 cursor-pointer transition-colors hover:bg-surface-container-low ${
+                    className={`group h-11 cursor-pointer transition-colors hover:bg-surface-container-low ${
                       selectedId === row.id
                         ? "bg-surface-container-high/40"
                         : "bg-surface-container-lowest"
@@ -1285,11 +1281,11 @@ export default function TopScorersTable({
                         >
                           {row.initials}
                         </div>
-                        <div className="flex flex-col">
-                          <span className="whitespace-nowrap font-body-lg text-body-lg font-bold tracking-tight text-primary">
+                        <div className="flex flex-col justify-center">
+                          <span className="whitespace-nowrap font-body-sm text-body-sm font-bold tracking-tight text-primary">
                             {row.name}
                           </span>
-                          <div className="flex items-center gap-1 font-label-sm text-label-sm uppercase text-secondary">
+                          <div className="hidden items-center gap-1 font-label-sm text-label-sm uppercase text-secondary group-hover:flex">
                             <span>{row.nationCode}</span>
                             <span aria-hidden="true">•</span>
                             <span className="rounded-chip bg-surface-container px-1 text-primary">
@@ -1303,9 +1299,6 @@ export default function TopScorersTable({
                     <td className="px-space-md">
                       <div className="flex items-center gap-1.5 font-body-sm text-body-sm text-primary">
                         <TeamCrest url={row.clubCrest} alt={row.club} className="h-4 w-4 shrink-0 object-contain" />
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-pill bg-surface-container text-[9px] font-bold">
-                          {row.clubCode}
-                        </span>
                         <span className="truncate">{row.club}</span>
                       </div>
                     </td>
@@ -1357,7 +1350,7 @@ export default function TopScorersTable({
           </div>
 
           {/* Table footer and pagination */}
-          <div className="flex flex-col items-center justify-between gap-space-md bg-surface-container-low p-space-md md:flex-row">
+          <div className="mt-space-md flex flex-col items-center justify-between gap-space-md bg-surface-container-low p-space-md md:flex-row">
             <div className="flex flex-wrap items-center gap-space-md">
               <span className="font-body-sm text-body-sm text-secondary">
                 Showing{" "}
@@ -1457,35 +1450,7 @@ export default function TopScorersTable({
 
         {/* ─── Methodology, glossary & season summary ────────────────── */}
         <section className="grid grid-cols-1 gap-space-md md:grid-cols-12">
-          <div className="flex flex-col gap-space-xs rounded-card bg-surface-container-lowest p-space-md shadow-sm md:col-span-8">
-            <div className="flex items-center gap-space-xs">
-              <span className="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">
-                info
-              </span>
-              <h2 className="font-headline-sm text-headline-sm uppercase tracking-wider text-primary">
-                Metrics Glossary &amp; Data Source
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 gap-space-sm pt-space-xs font-body-sm text-body-sm text-secondary sm:grid-cols-2">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
-                  Goals &amp; Appearances
-                </span>
-                <p>
-                  Goals scored and matches played, published by the official feed for every
-                  goalscorer of the current season.
-                </p>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
-                  Golden Boot Tiebreaker
-                </span>
-                <p>Tied on goals: 1. Most assists; 2. Player name, alphabetically.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col justify-between rounded-card bg-surface-container-lowest p-space-md shadow-sm md:col-span-4">
+          <div className="flex flex-col justify-between rounded-card bg-surface-container-lowest p-space-md shadow-sm md:col-span-12">
             <div className="flex items-center justify-between gap-space-sm">
               <span className="font-label-sm text-label-sm font-bold uppercase tracking-widest text-secondary">
                 Season Summary

@@ -135,6 +135,16 @@ class ApiFootballProvider(Provider):
         results = data.get("response", [])
         return results[0] if results else None
 
+    async def get_player_profile(self, player_id: int) -> dict | None:
+        """Fetch a player profile without season-scoped statistics.
+
+        Deliberately season-less: a photo URL does not depend on the season,
+        and the season-scoped endpoint is not available on every plan.
+        """
+        data = await _get("players", {"id": player_id})
+        results = data.get("response", [])
+        return results[0] if results else None
+
     async def get_fixtures(
         self,
         league_id: int | None = None,

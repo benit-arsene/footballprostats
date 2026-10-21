@@ -21,6 +21,8 @@ class Player(Base):
     date_of_birth: Mapped[str | None] = mapped_column(String(10), nullable=True)
     height_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
     foot: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    photo_updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

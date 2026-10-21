@@ -127,10 +127,11 @@ export interface TopScorer {
  * A row from `GET /api/v1/standings/top-scorers-live`.
  *
  * football-data.org publishes goals and appearances for every scorer, and
- * assists/penalties only where the provider reports them — a `null` there
- * means "not published", never zero. Position arrives as a coarse `section`
- * (Offence / Midfield / Defence); the fine-grained `position` is null.
- * Minutes, xG, shots and recent form are not published by this provider.
+ * reports assists/penalties only for players who have them — a `null` there
+ * means "none recorded", which the top scorers page displays as zero.
+ * Position arrives as a coarse `section` (Offence / Midfield / Defence); the
+ * fine-grained `position` is null. Minutes, xG, shots and recent form are not
+ * published by this provider.
  */
 export interface LiveTopScorer {
   player: {

@@ -57,10 +57,10 @@ type ScorerRow = {
   positionGroup: PositionGroup | null;
   shirtNumber: number | null;
   goals: number;
-  assists: number | null;
-  ga: number | null;
+  assists: number;
+  ga: number;
   apps: number | null;
-  penalties: number | null;
+  penalties: number;
   goalsPerApp: number | null;
 };
 
@@ -326,8 +326,10 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
     if (!name) return;
 
     const position = positionOf(scorer.player);
-    const assists = typeof scorer.assists === "number" ? scorer.assists : null;
-    const penalties = typeof scorer.penalties === "number" ? scorer.penalties : null;
+    // football-data.org only publishes assists and penalties for players who
+    // have them, so a missing value means none — it is read as zero here.
+    const assists = typeof scorer.assists === "number" ? scorer.assists : 0;
+    const penalties = typeof scorer.penalties === "number" ? scorer.penalties : 0;
     const goals = scorer.goals ?? 0;
     const apps = typeof scorer.played_matches === "number" ? scorer.played_matches : null;
 
@@ -346,9 +348,7 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
       shirtNumber: scorer.player?.shirt_number ?? scorer.player?.number ?? null,
       goals,
       assists,
-      // A null assist means the provider did not publish the figure — it is
-      // never treated as zero, so G+A stays unknown too.
-      ga: assists === null ? null : goals + assists,
+      ga: goals + assists,
       apps,
       penalties,
       goalsPerApp: apps !== null && apps > 0 ? goals / apps : null,
@@ -357,7 +357,7 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
 
   rows.sort((a, b) => {
     if (b.goals !== a.goals) return b.goals - a.goals;
-    if ((b.assists ?? -1) !== (a.assists ?? -1)) return (b.assists ?? -1) - (a.assists ?? -1);
+    if (b.assists !== a.assists) return b.assists - a.assists;
     return a.name.localeCompare(b.name);
   });
 
@@ -592,7 +592,7 @@ export default function TopScorersTable({
   const sorted = useMemo(() => {
     const tiebreak = (a: ScorerRow, b: ScorerRow) => {
       if (b.goals !== a.goals) return b.goals - a.goals;
-      if ((b.assists ?? -1) !== (a.assists ?? -1)) return (b.assists ?? -1) - (a.assists ?? -1);
+      if (b.assists !== a.assists) return b.assists - a.assists;
       return a.name.localeCompare(b.name);
     };
 
@@ -928,13 +928,13 @@ export default function TopScorersTable({
                 />
                 <SpotlightMetric
                   label="Assists"
-                  value={leader.assists === null ? DASH : leader.assists}
-                  note={leader.assists === null ? "Not reported by provider" : "Recorded assists"}
+                  value={leader.assists}
+                  note="Assists recorded"
                 />
                 <SpotlightMetric
                   label="Penalties"
-                  value={leader.penalties === null ? DASH : leader.penalties}
-                  note={leader.penalties === null ? "Not reported by provider" : "Penalty goals"}
+                  value={leader.penalties}
+                  note="Penalty goals"
                 />
                 <SpotlightMetric
                   label="Goals / App"
@@ -1006,13 +1006,7 @@ export default function TopScorersTable({
                     </span>
                     <div className="flex items-baseline gap-1.5">
                       <span className="font-stat-display text-stat-display text-primary">
-                        {index === 0
-                          ? player.assists === null
-                            ? DASH
-                            : player.assists
-                          : player.ga === null
-                            ? DASH
-                            : player.ga}
+                        {index === 0 ? player.assists : player.ga}
                       </span>
                       <span className="font-label-md text-label-md uppercase text-secondary">
                         {index === 0 ? "Assists" : "G+A"}
@@ -1029,7 +1023,7 @@ export default function TopScorersTable({
                 />
                 <MiniStat
                   label="Penalties"
-                  value={player.penalties === null ? DASH : String(player.penalties)}
+                  value={String(player.penalties)}
                 />
               </div>
             </article>
@@ -1303,29 +1297,15 @@ export default function TopScorersTable({
                     ) : null}
 
                     {visibleColumns.assists ? (
-                      <td
-                        className={`px-space-sm text-right ${
-                          row.assists === null ? "text-secondary" : "font-medium"
-                        }`}
-                      >
-                        {row.assists === null ? <Dash /> : row.assists}
-                      </td>
+                      <td className="px-space-sm text-right font-medium">{row.assists}</td>
                     ) : null}
 
                     {visibleColumns.ga ? (
-                      <td className="px-space-sm text-right font-bold text-primary">
-                        {row.ga === null ? <Dash /> : row.ga}
-                      </td>
+                      <td className="px-space-sm text-right font-bold text-primary">{row.ga}</td>
                     ) : null}
 
                     {visibleColumns.penalties ? (
-                      <td
-                        className={`px-space-sm text-right ${
-                          row.penalties === null ? "text-secondary" : "font-medium"
-                        }`}
-                      >
-                        {row.penalties === null ? <Dash /> : row.penalties}
-                      </td>
+                      <td className="px-space-sm text-right font-medium">{row.penalties}</td>
                     ) : null}
 
                     {visibleColumns.goalsPerApp ? (
@@ -1475,17 +1455,15 @@ export default function TopScorersTable({
                   Assists &amp; Penalties
                 </span>
                 <p>
-                  Reported only where the provider publishes them. A dash means the figure was not
-                  supplied — it is never counted as zero.
+                  Provider figures for the current season. The feed only reports these for players
+                  who have them, so a missing value is counted as zero.
                 </p>
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
                   Golden Boot Tiebreaker
                 </span>
-                <p>
-                  Tied on goals: 1. Most assists, where reported; 2. Player name, alphabetically.
-                </p>
+                <p>Tied on goals: 1. Most assists; 2. Player name, alphabetically.</p>
               </div>
             </div>
           </div>

@@ -106,15 +106,6 @@ export function getLiveTopScorers(): Promise<LiveTopScorersResponse> {
   return apiFetch(`/api/v1/standings/top-scorers-live`);
 }
 
-export async function getLiveTopScorersWithLatency(): Promise<{
-  data: LiveTopScorersResponse;
-  latencyMs: number;
-}> {
-  const started = performance.now();
-  const data = await getLiveTopScorers();
-  return { data, latencyMs: performance.now() - started };
-}
-
 export function getSeasons(competitionId: number = 1): Promise<{ id: number; label: string }[]> {
   return apiFetch(`/api/v1/standings/seasons?competition_id=${competitionId}`);
 }

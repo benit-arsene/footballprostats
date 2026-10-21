@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import TopScorersTable, { type ScorerInput } from "@/components/TopScorersTable";
-import { getLiveMatchesSummary, getLiveTopScorersWithLatency } from "@/lib/api";
+import { getLiveMatchesSummary, getLiveTopScorers } from "@/lib/api";
 import type { MatchSummary } from "@/lib/types";
 
 // The golden boot race changes with every matchweek — never bake a snapshot in.
@@ -14,21 +14,19 @@ export const metadata: Metadata = {
 
 export default async function TopScorersPage() {
   const [scorersResult, matchesResult] = await Promise.allSettled([
-    getLiveTopScorersWithLatency(),
+    getLiveTopScorers(),
     getLiveMatchesSummary(),
   ]);
 
   let scorers: ScorerInput[] = [];
   let season: string | null = null;
   let updatedAt: string | null = null;
-  let latencyMs: number | null = null;
   let feed: "live" | "snapshot" = "live";
 
-  if (scorersResult.status === "fulfilled" && scorersResult.value.data.scorers?.length > 0) {
-    scorers = scorersResult.value.data.scorers;
-    season = scorersResult.value.data.season ?? null;
-    updatedAt = scorersResult.value.data.last_updated ?? null;
-    latencyMs = scorersResult.value.latencyMs;
+  if (scorersResult.status === "fulfilled" && scorersResult.value.scorers?.length > 0) {
+    scorers = scorersResult.value.scorers;
+    season = scorersResult.value.season ?? null;
+    updatedAt = scorersResult.value.last_updated ?? null;
   } else {
     scorers = [];
     feed = "snapshot";
@@ -43,7 +41,6 @@ export default async function TopScorersPage() {
         scorers={scorers}
         season={season}
         updatedAt={updatedAt}
-        latencyMs={latencyMs}
         highlights={highlights}
         feed={feed}
       />

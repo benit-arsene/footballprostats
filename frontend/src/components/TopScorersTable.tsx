@@ -33,7 +33,6 @@ type Props = {
   scorers: ScorerInput[];
   season?: string | null;
   updatedAt?: string | null;
-  latencyMs?: number | null;
   highlights?: MatchSummary[];
   feed?: "live" | "snapshot";
 };
@@ -436,19 +435,19 @@ const ALL_COLUMNS_VISIBLE: Record<ColumnKey, boolean> = {
   form: true,
 };
 
-const SORT_LABELS: Record<SortKey, string> = {
-  player: "Player",
-  club: "Club",
-  apps: "Apps",
-  mins: "Minutes",
-  goals: "Goals",
-  assists: "Assists",
-  ga: "G+A",
-  xg: "xG",
-  xgDelta: "xG Delta",
-  shots: "Shots",
-  conversion: "Conversion",
-  minsPerGoal: "Mins/Goal",
+/** Opening view keeps the table scannable: only the scoring columns. */
+const DEFAULT_COLUMNS_VISIBLE: Record<ColumnKey, boolean> = {
+  apps: false,
+  mins: false,
+  goals: true,
+  assists: true,
+  ga: true,
+  xg: false,
+  xgDelta: false,
+  shots: false,
+  conversion: false,
+  minsPerGoal: false,
+  form: false,
 };
 
 function sortValue(row: ScorerRow, sortKey: SortKey): number | string | null {
@@ -477,33 +476,6 @@ function sortValue(row: ScorerRow, sortKey: SortKey): number | string | null {
       return row.conversion;
     case "minsPerGoal":
       return row.minsPerGoal;
-  }
-}
-
-function csvValue(row: ScorerRow, column: ColumnKey): string {
-  switch (column) {
-    case "apps":
-      return row.apps === null ? "" : String(row.apps);
-    case "mins":
-      return row.minutes === null ? "" : String(row.minutes);
-    case "goals":
-      return String(row.goals);
-    case "assists":
-      return row.assists === null ? "" : String(row.assists);
-    case "ga":
-      return String(row.ga);
-    case "xg":
-      return row.xg === null ? "" : row.xg.toFixed(2);
-    case "xgDelta":
-      return row.xgDelta === null ? "" : row.xgDelta.toFixed(2);
-    case "shots":
-      return row.shots === null ? "" : `${row.shots} (${row.shotsOnTarget ?? 0})`;
-    case "conversion":
-      return row.conversion === null ? "" : `${row.conversion.toFixed(1)}%`;
-    case "minsPerGoal":
-      return row.minsPerGoal === null ? "" : row.minsPerGoal.toFixed(1);
-    case "form":
-      return row.recentForm ? row.recentForm.map((result) => (result === "goal" ? "G" : "-")).join("") : "";
   }
 }
 
@@ -592,7 +564,6 @@ export default function TopScorersTable({
   scorers,
   season,
   updatedAt,
-  latencyMs,
   highlights = [],
   feed = "live",
 }: Props) {
@@ -608,7 +579,7 @@ export default function TopScorersTable({
   const [pageSize, setPageSize] = useState(10);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
-    ...ALL_COLUMNS_VISIBLE,
+    ...DEFAULT_COLUMNS_VISIBLE,
   });
   const [columnsOpen, setColumnsOpen] = useState(false);
   const columnsRef = useRef<HTMLDivElement>(null);
@@ -704,10 +675,6 @@ export default function TopScorersTable({
 
   const seasonValue = formatSeason(season);
   const updatedLabel = formatUpdated(updatedAt);
-  const latencyLabel = latencyMs === null || latencyMs === undefined ? DASH : `${latencyMs.toFixed(1)}ms`;
-  const sortCriterion = `${SORT_LABELS[sort.key]} (${sort.dir === "desc" ? "Desc" : "Asc"}) • Tiebreak: ${
-    sort.key === "goals" ? "Assists" : "Goals"
-  }`;
 
   const highlightCards = useMemo(
     () =>
@@ -747,37 +714,6 @@ export default function TopScorersTable({
     setPositionGroup("");
     setMinApps(0);
     setPage(1);
-  }
-
-  function exportCsv() {
-    const header = [
-      "Rank",
-      "Player",
-      "Club",
-      "Nation",
-      "Position",
-      ...visibleColumnList.map((column) => column.label),
-    ];
-    const body = sorted.map((row) => [
-      String(row.rank),
-      row.name,
-      row.club,
-      row.nationCode,
-      row.positionCode,
-      ...visibleColumnList.map((column) => csvValue(row, column.key)),
-    ]);
-    const escape = (value: string) =>
-      /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
-    const csv = [header, ...body].map((line) => line.map(escape).join(",")).join("\r\n");
-    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `premier-league-top-scorers-${(season ?? "current-season").replace(/\//g, "-")}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
   }
 
   function sortIcon(sortKey: SortKey): string | null {
@@ -823,14 +759,6 @@ export default function TopScorersTable({
                 </span>
               ) : null}
             </div>
-          </div>
-          <div className="hidden items-center gap-2 md:flex">
-            <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">
-              Calculation Latency
-            </span>
-            <span className="rounded-chip bg-surface-container-lowest px-1.5 py-0.5 font-stat-tabular text-stat-tabular font-bold text-primary">
-              {latencyLabel}
-            </span>
           </div>
         </div>
       </section>
@@ -958,26 +886,6 @@ export default function TopScorersTable({
                 </div>
               ) : null}
             </div>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="flex h-8 items-center gap-1.5 rounded-chip bg-surface-container-lowest px-space-md font-label-md text-label-md uppercase tracking-wider text-primary shadow-sm transition-colors hover:bg-surface-container-low"
-            >
-              <span className="material-symbols-outlined text-[15px]" aria-hidden="true">
-                print
-              </span>
-              <span>Print Sheet</span>
-            </button>
-            <button
-              type="button"
-              onClick={exportCsv}
-              className="flex h-8 items-center gap-1.5 rounded-chip bg-primary px-space-md font-label-md text-label-md uppercase tracking-wider text-on-primary shadow-sm transition-colors hover:bg-primary-container"
-            >
-              <span className="material-symbols-outlined text-[15px]" aria-hidden="true">
-                download
-              </span>
-              <span>Export .CSV</span>
-            </button>
           </div>
         </header>
 
@@ -1208,14 +1116,6 @@ export default function TopScorersTable({
                   {label}
                 </button>
               ))}
-            </div>
-            <div className="flex items-center gap-space-sm self-end md:self-auto">
-              <span className="font-label-sm text-label-sm uppercase tracking-widest text-secondary">
-                Sort Criterion:
-              </span>
-              <span className="font-label-md text-label-md font-bold uppercase text-primary">
-                {sortCriterion}
-              </span>
             </div>
           </div>
 

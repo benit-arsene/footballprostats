@@ -265,6 +265,8 @@ function StandingsWidget({ standings, leagueName, leagueSlug, lastUpdated }: { s
 }
 
 function TopScorersWidget({ scorers, leagueName, season }: { scorers: { player: { name: string }; team: { name: string }; goals: number }[]; leagueName: string; season: string }) {
+  // The sidebar only summarises the leaders; the full table lives on the scorers page.
+  const topScorers = scorers.slice(0, 5);
   return (
     <div className="mt-4 rounded-xl border border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-4 py-3">
@@ -272,7 +274,7 @@ function TopScorersWidget({ scorers, leagueName, season }: { scorers: { player: 
         <p className="text-[11px] text-zinc-400">{leagueName} {season}</p>
       </div>
       <div className="divide-y divide-zinc-50">
-        {scorers.map((s, i) => (
+        {topScorers.map((s, i) => (
           <div key={s.player.name} className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors">
             <span className="w-4 text-center text-[11px] font-bold text-zinc-300 tabular-nums">{i + 1}</span>
             <div className="flex-1 overflow-hidden">

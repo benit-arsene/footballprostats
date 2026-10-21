@@ -101,6 +101,8 @@
   --spacing-gutter-desktop: 20px;
   --spacing-margin: 16px;
   --spacing-margin-desktop: 32px;
+  /* Wide-viewport gutter: applied on top of the base margin from md up. */
+  --spacing-margin-wide: 64px;
 
   /* Type scale */
   --font-label-sm: var(--font-jakarta), "Plus Jakarta Sans", Arial, sans-serif;

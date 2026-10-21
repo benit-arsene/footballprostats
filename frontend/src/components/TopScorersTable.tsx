@@ -458,7 +458,7 @@ function SortHeader({
   label: string;
   icon: string | null;
   active: boolean;
-  align?: "start" | "end";
+  align?: "start" | "center" | "end";
   onClick: () => void;
 }) {
   return (
@@ -466,7 +466,7 @@ function SortHeader({
       type="button"
       onClick={onClick}
       className={`flex w-full cursor-pointer items-center gap-1 uppercase transition-colors ${
-        align === "end" ? "justify-end" : ""
+        align === "end" ? "justify-end" : align === "center" ? "justify-center" : ""
       } ${active ? "text-primary" : "hover:text-primary"}`}
     >
       <span>{label}</span>
@@ -691,8 +691,8 @@ export default function TopScorersTable({
   return (
     <div className="flex w-full flex-col">
       {/* ─── Matchweek context bar ─────────────────────────────────── */}
-      <section className="w-full bg-surface-container-low px-margin-desktop py-space-xs shadow-sm">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between">
+      <section className="w-full bg-surface-container-low py-space-xs shadow-sm">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-margin-desktop md:px-margin-wide">
           <div className="flex items-center gap-space-lg overflow-x-auto py-1 text-nowrap">
             <span className="flex items-center gap-1 font-label-sm text-label-sm uppercase tracking-widest text-secondary">
               <span className="material-symbols-outlined text-[13px] text-primary" aria-hidden="true">
@@ -725,7 +725,7 @@ export default function TopScorersTable({
       </section>
 
       {/* ─── Analytical canvas ─────────────────────────────────────── */}
-      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-space-lg px-margin-desktop py-space-lg">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-space-lg px-margin-desktop py-space-lg md:px-margin-wide">
         {/* Breadcrumb + feed status */}
         <div className="flex flex-wrap items-center justify-between gap-space-sm">
           <nav
@@ -1032,17 +1032,6 @@ export default function TopScorersTable({
 
         {/* ─── Controls, filters and sort ribbon ─────────────────────── */}
         <section className="flex flex-col gap-space-md rounded-card bg-surface-container-lowest p-space-md shadow-sm">
-          <div className="flex flex-col justify-between gap-space-sm md:flex-row md:items-center">
-            <div className="flex items-center gap-space-xs overflow-x-auto pb-1 md:pb-0">
-              <button
-                type="button"
-                className="rounded-chip bg-primary px-space-md py-1.5 font-label-md text-label-md uppercase tracking-wider text-on-primary shadow-sm"
-              >
-                Standard Table
-              </button>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 gap-space-xs sm:grid-cols-2 lg:grid-cols-12">
             <div className="relative flex items-center lg:col-span-4">
               <span
@@ -1207,7 +1196,7 @@ export default function TopScorersTable({
                         key={column.key}
                         scope="col"
                         aria-sort={retheme(sortKey)}
-                        className={`${column.minWidth} ${column.padding} py-2 text-right ${
+                        className={`${column.minWidth} ${column.padding} py-2 text-center ${
                           column.headExtra ?? ""
                         }`}
                       >
@@ -1215,6 +1204,7 @@ export default function TopScorersTable({
                           label={column.label}
                           icon={sortIcon(sortKey)}
                           active={sort.key === sortKey}
+                          align="center"
                           onClick={() => toggleSort(sortKey)}
                         />
                       </th>
@@ -1285,31 +1275,31 @@ export default function TopScorersTable({
                     </td>
 
                     {visibleColumns.apps ? (
-                      <td className="px-space-sm text-right text-secondary">
+                      <td className="px-space-sm text-center text-secondary">
                         {row.apps === null ? <Dash /> : row.apps}
                       </td>
                     ) : null}
 
                     {visibleColumns.goals ? (
-                      <td className="bg-surface-container/60 px-space-md text-right font-extrabold text-headline-sm text-primary">
+                      <td className="bg-surface-container/60 px-space-md text-center font-extrabold text-headline-sm text-primary">
                         {row.goals}
                       </td>
                     ) : null}
 
                     {visibleColumns.assists ? (
-                      <td className="px-space-sm text-right font-medium">{row.assists}</td>
+                      <td className="px-space-sm text-center font-medium">{row.assists}</td>
                     ) : null}
 
                     {visibleColumns.ga ? (
-                      <td className="px-space-sm text-right font-bold text-primary">{row.ga}</td>
+                      <td className="px-space-sm text-center font-bold text-primary">{row.ga}</td>
                     ) : null}
 
                     {visibleColumns.penalties ? (
-                      <td className="px-space-sm text-right font-medium">{row.penalties}</td>
+                      <td className="px-space-sm text-center font-medium">{row.penalties}</td>
                     ) : null}
 
                     {visibleColumns.goalsPerApp ? (
-                      <td className="px-space-md text-right font-bold text-primary">
+                      <td className="px-space-md text-center font-bold text-primary">
                         {row.goalsPerApp === null ? <Dash /> : row.goalsPerApp.toFixed(2)}
                       </td>
                     ) : null}
@@ -1440,7 +1430,7 @@ export default function TopScorersTable({
                 Metrics Glossary &amp; Data Source
               </h2>
             </div>
-            <div className="grid grid-cols-1 gap-space-sm pt-space-xs font-body-sm text-body-sm text-secondary sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-space-sm pt-space-xs font-body-sm text-body-sm text-secondary sm:grid-cols-2">
               <div className="flex flex-col gap-0.5">
                 <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
                   Goals &amp; Appearances
@@ -1448,15 +1438,6 @@ export default function TopScorersTable({
                 <p>
                   Goals scored and matches played, published by the official feed for every
                   goalscorer of the current season.
-                </p>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
-                  Assists &amp; Penalties
-                </span>
-                <p>
-                  Provider figures for the current season. The feed only reports these for players
-                  who have them, so a missing value is counted as zero.
                 </p>
               </div>
               <div className="flex flex-col gap-0.5">

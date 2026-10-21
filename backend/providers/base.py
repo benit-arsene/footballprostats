@@ -67,6 +67,14 @@ class Provider(ABC):
     async def get_top_scorers(self, league_id: int, season: int) -> list[dict]:
         """Fetch top scorers. Returns list of raw scorer responses."""
 
+    async def get_top_scorers_payload(self, league_id: int, season: int) -> dict:
+        """Fetch the complete scorers response, including provider context.
+
+        Providers that publish extra context (season matchday, total count)
+        override this. The default returns only the scorer rows.
+        """
+        return {"scorers": await self.get_top_scorers(league_id, season)}
+
     @abstractmethod
     async def search_team(self, name: str) -> list[dict]:
         """Search for teams by name. Returns list of raw team responses."""

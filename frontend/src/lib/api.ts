@@ -97,8 +97,10 @@ export function getLiveStandings(): Promise<{ season: string; last_updated: stri
 }
 
 export type LiveTopScorersResponse = {
-  season: string;
-  last_updated: string;
+  season: string | null;
+  current_matchday: number | null;
+  scorers_count: number | null;
+  goals_total: number | null;
   scorers: LiveTopScorer[];
 };
 

@@ -23,6 +23,10 @@ from providers.football_data.adapters import (
 
 BASE_URL = "https://api.football-data.org/v4"
 
+# The v4 scorers subresource defaults to limit=10. Request a limit high enough
+# to return every recorded goalscorer for the competition in one call.
+SCORERS_LIMIT = 500
+
 # Mapping from internal competition IDs to football-data.org competition codes
 # (duplicated here for client use; adapters also define these).
 
@@ -198,15 +202,23 @@ class FootballDataProvider(Provider):
         except APIError:
             return []
 
-    async def get_top_scorers(self, league_id: int, season: int) -> list[dict]:
+    async def get_top_scorers_payload(self, league_id: int, season: int) -> dict:
+        """Full scorers response: rows plus provider context (count, season)."""
         code = _comp_code(league_id)
         if not code:
-            return []
+            return {}
         try:
-            data = await _get(f"/competitions/{code}/scorers", {"season": season})
-            return data.get("scorers", [])
+            data = await _get(
+                f"/competitions/{code}/scorers",
+                {"season": season, "limit": SCORERS_LIMIT},
+            )
+            return data
         except APIError:
-            return []
+            return {}
+
+    async def get_top_scorers(self, league_id: int, season: int) -> list[dict]:
+        payload = await self.get_top_scorers_payload(league_id, season)
+        return payload.get("scorers", [])
 
     async def search_team(self, name: str) -> list[dict]:
         # football-data.org doesn't have a search endpoint; return empty

@@ -27,7 +27,27 @@ _LIVE_TTL = 600
 router = APIRouter(prefix="/api/v1/standings", tags=["standings"])
 
 
-# In-memory cache for live top scorers (60-minute TTL)
+def _scorers_season_label(payload: dict) -> str | None:
+    """Season label derived from the provider payload.
+
+    Uses the season start/end years published by football-data.org and falls
+    back to the requested season filter. Never hardcodes a season.
+    """
+    season = payload.get("season") or {}
+    start = str(season.get("startDate") or "")
+    end = str(season.get("endDate") or "")
+    if len(start) >= 4 and len(end) >= 4:
+        return f"{start[:4]}/{end[:4]}"
+
+    filters = payload.get("filters") or {}
+    try:
+        start_year = int(filters.get("season"))
+    except (TypeError, ValueError):
+        return None
+    return f"{start_year}/{start_year + 1}"
+
+
+# In-memory cache for live top scorers (90-minute TTL)
 _SCORERS_CACHE = {"data": None, "ts": 0.0}
 _SCORERS_TTL = 5400
 
@@ -45,13 +65,18 @@ async def get_live_top_scorers():
         if "football_data" not in available:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "football-data.org not configured"}})
         provider = registry.get_provider("football_data")
-        raw = await provider.get_top_scorers(39, get_season_year())
+        payload = await provider.get_top_scorers_payload(39, get_season_year())
+        raw = payload.get("scorers", [])
         if not raw:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "No scorers available"}})
         rows = []
+        goals_total = 0
         for r in raw:
             player = r.get("player", {}) or {}
             team = r.get("team", {}) or {}
+            goals = r.get("goals")
+            if isinstance(goals, int):
+                goals_total += goals
             rows.append({
                 "player": {
                     "name": player.get("name", ""),
@@ -70,13 +95,16 @@ async def get_live_top_scorers():
                     "crest_url": team.get("crest"),
                 },
                 "played_matches": r.get("playedMatches"),
-                "goals": r.get("goals"),
+                "goals": goals,
                 "assists": r.get("assists"),
                 "penalties": r.get("penalties"),
             })
+        provider_season = payload.get("season") or {}
         data = {
-            "season": "2026/2027",
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "season": _scorers_season_label(payload),
+            "current_matchday": provider_season.get("currentMatchday"),
+            "scorers_count": payload.get("count") or len(rows),
+            "goals_total": goals_total,
             "scorers": rows,
         }
         _SCORERS_CACHE["data"] = data

@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Premier League Top Scorers — Current Season",
   description:
-    "Official Premier League scoring records, expected goals (xG), shot conversion and tactical high-impact finishing metrics for every golden boot contender.",
+    "Official Premier League scoring records — goals, appearances, assists and penalties published by the official football-data.org feed for every recorded goalscorer.",
 };
 
 export default async function TopScorersPage() {
@@ -20,13 +20,17 @@ export default async function TopScorersPage() {
 
   let scorers: ScorerInput[] = [];
   let season: string | null = null;
-  let updatedAt: string | null = null;
+  let currentMatchday: number | null = null;
+  let scorersCount: number | null = null;
+  let goalsTotal: number | null = null;
   let feed: "live" | "snapshot" = "live";
 
   if (scorersResult.status === "fulfilled" && scorersResult.value.scorers?.length > 0) {
     scorers = scorersResult.value.scorers;
     season = scorersResult.value.season ?? null;
-    updatedAt = scorersResult.value.last_updated ?? null;
+    currentMatchday = scorersResult.value.current_matchday ?? null;
+    scorersCount = scorersResult.value.scorers_count ?? null;
+    goalsTotal = scorersResult.value.goals_total ?? null;
   } else {
     scorers = [];
     feed = "snapshot";
@@ -40,7 +44,9 @@ export default async function TopScorersPage() {
       <TopScorersTable
         scorers={scorers}
         season={season}
-        updatedAt={updatedAt}
+        currentMatchday={currentMatchday}
+        scorersCount={scorersCount}
+        goalsTotal={goalsTotal}
         highlights={highlights}
         feed={feed}
       />

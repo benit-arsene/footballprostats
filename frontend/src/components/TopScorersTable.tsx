@@ -32,7 +32,9 @@ export type ScorerInput = {
 type Props = {
   scorers: ScorerInput[];
   season?: string | null;
-  updatedAt?: string | null;
+  currentMatchday?: number | null;
+  scorersCount?: number | null;
+  goalsTotal?: number | null;
   highlights?: MatchSummary[];
   feed?: "live" | "snapshot";
 };
@@ -56,19 +58,10 @@ type ScorerRow = {
   shirtNumber: number | null;
   goals: number;
   assists: number | null;
-  ga: number;
+  ga: number | null;
   apps: number | null;
-  starts: number | null;
-  minutes: number | null;
   penalties: number | null;
-  xg: number | null;
-  xgDelta: number | null;
-  shots: number | null;
-  shotsOnTarget: number | null;
-  conversion: number | null;
-  minsPerGoal: number | null;
-  goalsPer90: number | null;
-  recentForm: Array<"goal" | "none"> | null;
+  goalsPerApp: number | null;
 };
 
 const DASH = "—";
@@ -267,29 +260,47 @@ function groupFromText(text: string): PositionGroup | null {
   return null;
 }
 
+/** Coarse group taken straight from the provider's `section` value. */
+function groupFromSection(section: string): PositionGroup | null {
+  const value = section.toLowerCase();
+  if (value.startsWith("off")) return "offence";
+  if (value.startsWith("mid")) return "midfield";
+  if (value.startsWith("def")) return "defence";
+  return null;
+}
+
 function positionOf(player?: ScorerInput["player"]): {
   label: string;
   code: string;
   group: PositionGroup | null;
 } {
-  const raw = player?.position?.trim();
-  if (raw) {
+  // The provider publishes a coarse section (Offence / Midfield / Defence) and a
+  // fine-grained position that is currently null. A section never implies a
+  // specific role, so it is shown as the section itself — never as FW/MF/DF.
+  const position = player?.position?.trim();
+  const section = player?.section?.trim();
+
+  if (position) {
     const code =
-      POSITION_CODES.find(([pattern]) => pattern.test(raw))?.[1] ??
-      raw
+      POSITION_CODES.find(([pattern]) => pattern.test(position))?.[1] ??
+      position
         .split(/\s+/)
         .map((word) => word[0])
         .join("")
         .slice(0, 3)
         .toUpperCase();
-    return { label: raw, code, group: groupFromText(raw) };
+    return {
+      label: position,
+      code,
+      group: groupFromText(position) ?? (section ? groupFromSection(section) : null),
+    };
   }
 
-  const section = player?.section?.trim().toLowerCase() ?? "";
-  if (section.startsWith("off")) return { label: "Forward", code: "FW", group: "offence" };
-  if (section.startsWith("mid")) return { label: "Midfielder", code: "MF", group: "midfield" };
-  if (section.startsWith("def")) return { label: "Defender", code: "DF", group: "defence" };
-  return { label: "Squad player", code: DASH, group: null };
+  if (section) {
+    return { label: section, code: section, group: groupFromSection(section) };
+  }
+
+  return { label: DASH, code: DASH, group: null };
 }
 
 // ─── Formatting helpers ──────────────────────────────────────────────
@@ -299,22 +310,6 @@ function formatSeason(value?: string | null): string {
   const match = value.match(/^(\d{4})\s*\/\s*(\d{2,4})$/);
   if (!match) return value;
   return `${match[1]}/${match[2].slice(-2)}`;
-}
-
-function formatUpdated(value?: string | null): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
-}
-
-function toFixed(value: number | null, digits: number): string | null {
-  return value === null ? null : value.toFixed(digits);
 }
 
 function Dash() {
@@ -332,7 +327,9 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
 
     const position = positionOf(scorer.player);
     const assists = typeof scorer.assists === "number" ? scorer.assists : null;
+    const penalties = typeof scorer.penalties === "number" ? scorer.penalties : null;
     const goals = scorer.goals ?? 0;
+    const apps = typeof scorer.played_matches === "number" ? scorer.played_matches : null;
 
     rows.push({
       id: `${scorer.player?.id ?? name}-${index}`,
@@ -349,21 +346,12 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
       shirtNumber: scorer.player?.shirt_number ?? scorer.player?.number ?? null,
       goals,
       assists,
-      ga: goals + (assists ?? 0),
-      apps: typeof scorer.played_matches === "number" ? scorer.played_matches : null,
-      // football-data reports appearances only; starts, minutes, xG, shots and
-      // recent form arrive with the Opta pipeline and render as dashes today.
-      starts: null,
-      minutes: null,
-      penalties: typeof scorer.penalties === "number" ? scorer.penalties : null,
-      xg: null,
-      xgDelta: null,
-      shots: null,
-      shotsOnTarget: null,
-      conversion: null,
-      minsPerGoal: null,
-      goalsPer90: null,
-      recentForm: null,
+      // A null assist means the provider did not publish the figure — it is
+      // never treated as zero, so G+A stays unknown too.
+      ga: assists === null ? null : goals + assists,
+      apps,
+      penalties,
+      goalsPerApp: apps !== null && apps > 0 ? goals / apps : null,
     });
   });
 
@@ -380,18 +368,13 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
 
 type ColumnKey =
   | "apps"
-  | "mins"
   | "goals"
   | "assists"
   | "ga"
-  | "xg"
-  | "xgDelta"
-  | "shots"
-  | "conversion"
-  | "minsPerGoal"
-  | "form";
+  | "penalties"
+  | "goalsPerApp";
 
-type SortKey = "player" | "club" | Exclude<ColumnKey, "form">;
+type SortKey = "player" | "club" | ColumnKey;
 
 type SortDir = "asc" | "desc";
 
@@ -402,8 +385,7 @@ const COLUMNS: Array<{
   padding: string;
   headExtra?: string;
 }> = [
-  { key: "apps", label: "Apps (St)", minWidth: "min-w-[70px]", padding: "px-space-sm" },
-  { key: "mins", label: "Mins", minWidth: "min-w-[65px]", padding: "px-space-sm" },
+  { key: "apps", label: "Apps", minWidth: "min-w-[70px]", padding: "px-space-sm" },
   {
     key: "goals",
     label: "Goals",
@@ -413,41 +395,27 @@ const COLUMNS: Array<{
   },
   { key: "assists", label: "Ast", minWidth: "min-w-[60px]", padding: "px-space-sm" },
   { key: "ga", label: "G+A", minWidth: "min-w-[60px]", padding: "px-space-sm" },
-  { key: "xg", label: "xG", minWidth: "min-w-[80px]", padding: "px-space-md" },
-  { key: "xgDelta", label: "xG Delta", minWidth: "min-w-[95px]", padding: "px-space-sm" },
-  { key: "shots", label: "Shots (OT)", minWidth: "min-w-[90px]", padding: "px-space-sm" },
-  { key: "conversion", label: "Conv %", minWidth: "min-w-[75px]", padding: "px-space-sm" },
-  { key: "minsPerGoal", label: "Mins / G", minWidth: "min-w-[90px]", padding: "px-space-md" },
-  { key: "form", label: "Recent Form", minWidth: "min-w-[120px]", padding: "px-space-md" },
+  { key: "penalties", label: "Pen", minWidth: "min-w-[60px]", padding: "px-space-sm" },
+  { key: "goalsPerApp", label: "Goals / App", minWidth: "min-w-[105px]", padding: "px-space-md" },
 ];
 
 const ALL_COLUMNS_VISIBLE: Record<ColumnKey, boolean> = {
   apps: true,
-  mins: true,
   goals: true,
   assists: true,
   ga: true,
-  xg: true,
-  xgDelta: true,
-  shots: true,
-  conversion: true,
-  minsPerGoal: true,
-  form: true,
+  penalties: true,
+  goalsPerApp: true,
 };
 
 /** Opening view keeps the table scannable: only the scoring columns. */
 const DEFAULT_COLUMNS_VISIBLE: Record<ColumnKey, boolean> = {
   apps: false,
-  mins: false,
   goals: true,
   assists: true,
   ga: true,
-  xg: false,
-  xgDelta: false,
-  shots: false,
-  conversion: false,
-  minsPerGoal: false,
-  form: false,
+  penalties: false,
+  goalsPerApp: false,
 };
 
 function sortValue(row: ScorerRow, sortKey: SortKey): number | string | null {
@@ -458,24 +426,16 @@ function sortValue(row: ScorerRow, sortKey: SortKey): number | string | null {
       return row.club;
     case "apps":
       return row.apps;
-    case "mins":
-      return row.minutes;
     case "goals":
       return row.goals;
     case "assists":
       return row.assists;
     case "ga":
       return row.ga;
-    case "xg":
-      return row.xg;
-    case "xgDelta":
-      return row.xgDelta;
-    case "shots":
-      return row.shots;
-    case "conversion":
-      return row.conversion;
-    case "minsPerGoal":
-      return row.minsPerGoal;
+    case "penalties":
+      return row.penalties;
+    case "goalsPerApp":
+      return row.goalsPerApp;
   }
 }
 
@@ -522,12 +482,10 @@ function SortHeader({
 function SpotlightMetric({
   label,
   value,
-  suffix,
   note,
 }: {
   label: string;
   value: string | number;
-  suffix?: string | null;
   note: string;
 }) {
   return (
@@ -537,23 +495,17 @@ function SpotlightMetric({
       </span>
       <div className="mt-0.5 flex items-baseline gap-1">
         <span className="font-stat-display text-headline-md text-on-primary">{value}</span>
-        {suffix ? (
-          <span className="font-label-sm text-label-sm font-bold text-on-primary">{suffix}</span>
-        ) : null}
       </div>
       <span className="font-body-sm text-body-sm text-on-primary-container">{note}</span>
     </div>
   );
 }
 
-function MiniStat({ label, value, delta }: { label: string; value: string; delta?: string | null }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between font-stat-tabular text-body-sm">
       <span className="font-label-sm text-label-sm uppercase text-secondary">{label}</span>
-      <span className="font-bold text-primary">
-        {value}
-        {delta ? <span className="text-label-sm text-secondary"> ({delta})</span> : null}
-      </span>
+      <span className="font-bold text-primary">{value}</span>
     </div>
   );
 }
@@ -563,7 +515,9 @@ function MiniStat({ label, value, delta }: { label: string; value: string; delta
 export default function TopScorersTable({
   scorers,
   season,
-  updatedAt,
+  currentMatchday = null,
+  scorersCount = null,
+  goalsTotal = null,
   highlights = [],
   feed = "live",
 }: Props) {
@@ -668,13 +622,20 @@ export default function TopScorersTable({
 
   const leader = rows[0] ?? null;
   const runnersUp = rows.slice(1, 3);
-  const recordShare = leader ? Math.min(100, Math.round((leader.goals / 36) * 100)) : 0;
-  const recordNote = leader
-    ? `${leader.name} is on ${recordShare}% of the 38-game record (${leader.goals} goals) this season.`
-    : "Awaiting the first goals of the season.";
 
   const seasonValue = formatSeason(season);
-  const updatedLabel = formatUpdated(updatedAt);
+  const matchdayValue = currentMatchday === null ? DASH : currentMatchday;
+  const scorerCountValue = scorersCount === null ? DASH : scorersCount;
+
+  // Factual season summary — every figure comes from the provider payload.
+  const seasonNote = (() => {
+    const parts: string[] = [];
+    if (goalsTotal !== null) parts.push(`${goalsTotal} goals recorded`);
+    if (scorersCount !== null) parts.push(`across ${scorersCount} scorers`);
+    if (currentMatchday !== null) parts.push(`through matchday ${currentMatchday}`);
+    if (parts.length === 0) return "Awaiting the first matchday of the season.";
+    return `${parts.join(" ")}.`;
+  })();
 
   const highlightCards = useMemo(
     () =>
@@ -819,8 +780,8 @@ export default function TopScorersTable({
               Premier League Top Scorers
             </h1>
             <p className="font-body-lg text-body-lg text-secondary">
-              Official scoring records, expected goals (xG), shot conversion, and tactical
-              high-impact finishing metrics verified across all 20 top-flight clubs.
+              Official Premier League scoring records — goals, appearances, assists and penalties
+              as published by the official football-data.org feed for every recorded goalscorer.
             </p>
           </div>
 
@@ -961,37 +922,24 @@ export default function TopScorersTable({
               {/* Metric cluster */}
               <div className="relative z-10 grid grid-cols-2 gap-space-sm pt-space-lg sm:grid-cols-4">
                 <SpotlightMetric
-                  label="Expected Goals"
-                  value={leader.xg === null ? DASH : leader.xg.toFixed(2)}
-                  suffix={
-                    leader.xgDelta === null
-                      ? null
-                      : `${leader.xgDelta > 0 ? "+" : ""}${leader.xgDelta.toFixed(2)}`
-                  }
-                  note={leader.xg === null ? "Awaiting shot-quality model" : "Positive Outperformance"}
+                  label="Appearances"
+                  value={leader.apps === null ? DASH : leader.apps}
+                  note={leader.apps === null ? "Not reported" : "Matches played"}
                 />
                 <SpotlightMetric
-                  label="Mins Per Goal"
-                  value={
-                    leader.minsPerGoal === null ? DASH : `${leader.minsPerGoal.toFixed(1)}'`
-                  }
-                  note={leader.minsPerGoal === null ? "Awaiting minutes feed" : "League pace"}
+                  label="Assists"
+                  value={leader.assists === null ? DASH : leader.assists}
+                  note={leader.assists === null ? "Not reported by provider" : "Recorded assists"}
                 />
                 <SpotlightMetric
-                  label="Shot Conversion"
-                  value={leader.conversion === null ? DASH : `${leader.conversion.toFixed(1)}%`}
-                  note={
-                    leader.conversion === null
-                      ? "Awaiting shot data"
-                      : `${leader.shots ?? 0} shots / ${leader.shotsOnTarget ?? 0} on target`
-                  }
-                />
-                <SpotlightMetric
-                  label="Spot Kicks"
+                  label="Penalties"
                   value={leader.penalties === null ? DASH : leader.penalties}
-                  note={
-                    leader.penalties === null ? "Awaiting penalty feed" : "Penalties converted"
-                  }
+                  note={leader.penalties === null ? "Not reported by provider" : "Penalty goals"}
+                />
+                <SpotlightMetric
+                  label="Goals / App"
+                  value={leader.goalsPerApp === null ? DASH : leader.goalsPerApp.toFixed(2)}
+                  note={leader.goalsPerApp === null ? "Needs appearances" : "Goals per appearance"}
                 />
               </div>
             </article>
@@ -1058,7 +1006,13 @@ export default function TopScorersTable({
                     </span>
                     <div className="flex items-baseline gap-1.5">
                       <span className="font-stat-display text-stat-display text-primary">
-                        {index === 0 ? (player.assists ?? DASH) : player.ga}
+                        {index === 0
+                          ? player.assists === null
+                            ? DASH
+                            : player.assists
+                          : player.ga === null
+                            ? DASH
+                            : player.ga}
                       </span>
                       <span className="font-label-md text-label-md uppercase text-secondary">
                         {index === 0 ? "Assists" : "G+A"}
@@ -1070,21 +1024,12 @@ export default function TopScorersTable({
 
               <div className="flex flex-col gap-space-xs rounded-chip bg-surface-container-low p-space-sm pt-space-sm">
                 <MiniStat
-                  label="Exp. Goals (xG)"
-                  value={toFixed(player.xg, 2) ?? DASH}
-                  delta={
-                    player.xgDelta === null
-                      ? null
-                      : `${player.xgDelta > 0 ? "+" : ""}${player.xgDelta.toFixed(2)}`
-                  }
+                  label="Apps"
+                  value={player.apps === null ? DASH : String(player.apps)}
                 />
                 <MiniStat
-                  label="Mins / Goal"
-                  value={player.minsPerGoal === null ? DASH : `${player.minsPerGoal.toFixed(1)}'`}
-                />
-                <MiniStat
-                  label="Conversion Rate"
-                  value={player.conversion === null ? DASH : `${player.conversion.toFixed(1)}%`}
+                  label="Penalties"
+                  value={player.penalties === null ? DASH : String(player.penalties)}
                 />
               </div>
             </article>
@@ -1101,21 +1046,6 @@ export default function TopScorersTable({
               >
                 Standard Table
               </button>
-              {[
-                "Advanced xG Analysis",
-                "Shooting Efficiency & Zones",
-                "Per 90 Metrics",
-              ].map((label) => (
-                <button
-                  key={label}
-                  type="button"
-                  disabled
-                  title="This view needs the Opta shot-level feed, which is not connected for this season yet."
-                  className="cursor-not-allowed rounded-chip bg-surface-container px-space-md py-1.5 font-label-md text-label-md uppercase tracking-wider text-secondary opacity-50"
-                >
-                  {label}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -1150,7 +1080,7 @@ export default function TopScorersTable({
                 }}
                 className="h-8 w-full cursor-pointer appearance-none rounded-chip bg-surface-container-low px-space-sm font-label-md text-label-md uppercase text-primary outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="">All {clubs.length || 20} Clubs</option>
+                <option value="">{clubs.length > 0 ? `All ${clubs.length} Clubs` : "All Clubs"}</option>
                 {clubs.map((name) => (
                   <option key={name} value={name}>
                     {name}
@@ -1167,7 +1097,7 @@ export default function TopScorersTable({
 
             <div className="relative lg:col-span-2">
               <select
-                aria-label="Filter by position"
+                aria-label="Filter by section"
                 value={positionGroup}
                 onChange={(event) => {
                   setPositionGroup(event.target.value as "" | PositionGroup);
@@ -1175,10 +1105,10 @@ export default function TopScorersTable({
                 }}
                 className="h-8 w-full cursor-pointer appearance-none rounded-chip bg-surface-container-low px-space-sm font-label-md text-label-md uppercase text-primary outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="">All Positions</option>
-                <option value="offence">Forwards (FW / CF)</option>
-                <option value="midfield">Midfielders (MF / CAM)</option>
-                <option value="defence">Defenders (DF)</option>
+                <option value="">All Sections</option>
+                <option value="offence">Offence</option>
+                <option value="midfield">Midfield</option>
+                <option value="defence">Defence</option>
               </select>
               <span
                 className="material-symbols-outlined pointer-events-none absolute right-2 top-2 text-[16px] text-secondary"
@@ -1282,21 +1212,17 @@ export default function TopScorersTable({
                       <th
                         key={column.key}
                         scope="col"
-                        aria-sort={column.key === "form" ? "none" : retheme(sortKey)}
+                        aria-sort={retheme(sortKey)}
                         className={`${column.minWidth} ${column.padding} py-2 text-right ${
                           column.headExtra ?? ""
                         }`}
                       >
-                        {column.key === "form" ? (
-                          <span>Recent Form</span>
-                        ) : (
-                          <SortHeader
-                            label={column.label}
-                            icon={sortIcon(sortKey)}
-                            active={sort.key === sortKey}
-                            onClick={() => toggleSort(sortKey)}
-                          />
-                        )}
+                        <SortHeader
+                          label={column.label}
+                          icon={sortIcon(sortKey)}
+                          active={sort.key === sortKey}
+                          onClick={() => toggleSort(sortKey)}
+                        />
                       </th>
                     );
                   })}
@@ -1366,17 +1292,7 @@ export default function TopScorersTable({
 
                     {visibleColumns.apps ? (
                       <td className="px-space-sm text-right text-secondary">
-                        {row.apps === null ? DASH : row.apps}
-                        <span className="text-secondary">
-                          {" "}
-                          ({row.starts === null ? DASH : row.starts})
-                        </span>
-                      </td>
-                    ) : null}
-
-                    {visibleColumns.mins ? (
-                      <td className="px-space-sm text-right font-medium">
-                        {row.minutes === null ? <Dash /> : `${row.minutes}'`}
+                        {row.apps === null ? <Dash /> : row.apps}
                       </td>
                     ) : null}
 
@@ -1392,75 +1308,29 @@ export default function TopScorersTable({
                           row.assists === null ? "text-secondary" : "font-medium"
                         }`}
                       >
-                        {row.assists === null ? "-" : row.assists}
+                        {row.assists === null ? <Dash /> : row.assists}
                       </td>
                     ) : null}
 
                     {visibleColumns.ga ? (
-                      <td className="px-space-sm text-right font-bold text-primary">{row.ga}</td>
-                    ) : null}
-
-                    {visibleColumns.xg ? (
-                      <td className="px-space-md text-right text-primary">
-                        {row.xg === null ? <Dash /> : row.xg.toFixed(2)}
+                      <td className="px-space-sm text-right font-bold text-primary">
+                        {row.ga === null ? <Dash /> : row.ga}
                       </td>
                     ) : null}
 
-                    {visibleColumns.xgDelta ? (
-                      <td className="px-space-sm text-right">
-                        {row.xgDelta === null ? (
-                          <Dash />
-                        ) : (
-                          <span className="rounded-chip bg-surface-container px-1.5 py-0.5 font-bold text-label-sm text-primary">
-                            {row.xgDelta > 0 ? "+" : ""}
-                            {row.xgDelta.toFixed(2)}
-                          </span>
-                        )}
+                    {visibleColumns.penalties ? (
+                      <td
+                        className={`px-space-sm text-right ${
+                          row.penalties === null ? "text-secondary" : "font-medium"
+                        }`}
+                      >
+                        {row.penalties === null ? <Dash /> : row.penalties}
                       </td>
                     ) : null}
 
-                    {visibleColumns.shots ? (
-                      <td className="px-space-sm text-right text-secondary">
-                        {row.shots === null ? (
-                          <Dash />
-                        ) : (
-                          `${row.shots} (${row.shotsOnTarget ?? 0})`
-                        )}
-                      </td>
-                    ) : null}
-
-                    {visibleColumns.conversion ? (
-                      <td className="px-space-sm text-right font-medium">
-                        {row.conversion === null ? <Dash /> : `${row.conversion.toFixed(1)}%`}
-                      </td>
-                    ) : null}
-
-                    {visibleColumns.minsPerGoal ? (
+                    {visibleColumns.goalsPerApp ? (
                       <td className="px-space-md text-right font-bold text-primary">
-                        {row.minsPerGoal === null ? <Dash /> : `${row.minsPerGoal.toFixed(1)}'`}
-                      </td>
-                    ) : null}
-
-                    {visibleColumns.form ? (
-                      <td className="px-space-md text-center">
-                        {row.recentForm ? (
-                          <div className="flex items-center justify-center gap-1">
-                            {row.recentForm.map((result, index) => (
-                              <span
-                                key={index}
-                                className={`flex h-4 w-4 items-center justify-center rounded-chip text-[10px] ${
-                                  result === "goal"
-                                    ? "bg-primary text-on-primary"
-                                    : "bg-surface-container text-secondary"
-                                }`}
-                              >
-                                {result === "goal" ? "⚽" : "•"}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <Dash />
-                        )}
+                        {row.goalsPerApp === null ? <Dash /> : row.goalsPerApp.toFixed(2)}
                       </td>
                     ) : null}
                   </tr>
@@ -1579,7 +1449,7 @@ export default function TopScorersTable({
           </div>
         </section>
 
-        {/* ─── Methodology, glossary & historical record ─────────────── */}
+        {/* ─── Methodology, glossary & season summary ────────────────── */}
         <section className="grid grid-cols-1 gap-space-md md:grid-cols-12">
           <div className="flex flex-col gap-space-xs rounded-card bg-surface-container-lowest p-space-md shadow-sm md:col-span-8">
             <div className="flex items-center gap-space-xs">
@@ -1587,26 +1457,26 @@ export default function TopScorersTable({
                 info
               </span>
               <h2 className="font-headline-sm text-headline-sm uppercase tracking-wider text-primary">
-                Metrics Glossary &amp; Data Pipeline
+                Metrics Glossary &amp; Data Source
               </h2>
             </div>
             <div className="grid grid-cols-1 gap-space-sm pt-space-xs font-body-sm text-body-sm text-secondary sm:grid-cols-3">
               <div className="flex flex-col gap-0.5">
                 <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
-                  xG (Expected Goals)
+                  Goals &amp; Appearances
                 </span>
                 <p>
-                  Measures shot quality based on pitch coordinate, defender proximity, assist
-                  vector, and striking body part.
+                  Goals scored and matches played, published by the official feed for every
+                  goalscorer of the current season.
                 </p>
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
-                  xG Delta (G - xG)
+                  Assists &amp; Penalties
                 </span>
                 <p>
-                  Finishing margin over benchmark model. Positive indicates elite precision or
-                  goalkeeper deflection variance.
+                  Reported only where the provider publishes them. A dash means the figure was not
+                  supplied — it is never counted as zero.
                 </p>
               </div>
               <div className="flex flex-col gap-0.5">
@@ -1614,8 +1484,7 @@ export default function TopScorersTable({
                   Golden Boot Tiebreaker
                 </span>
                 <p>
-                  If tied on goals: 1. Most Assists; 2. Fewest minutes played per goal ratio; 3.
-                  Non-penalty goals.
+                  Tied on goals: 1. Most assists, where reported; 2. Player name, alphabetically.
                 </p>
               </div>
             </div>
@@ -1624,35 +1493,31 @@ export default function TopScorersTable({
           <div className="flex flex-col justify-between rounded-card bg-surface-container-lowest p-space-md shadow-sm md:col-span-4">
             <div className="flex items-center justify-between gap-space-sm">
               <span className="font-label-sm text-label-sm font-bold uppercase tracking-widest text-secondary">
-                All-Time 38-Game Record
+                Season Summary
               </span>
               <span className="rounded-chip bg-surface-container px-1.5 py-0.5 font-label-sm text-label-sm text-primary">
-                Haaland (2022/23)
+                {seasonValue}
               </span>
             </div>
             <div className="flex items-baseline justify-between py-space-xs">
               <div className="flex items-baseline gap-1">
-                <span className="font-stat-display text-stat-display text-primary">36</span>
+                <span className="font-stat-display text-stat-display text-primary">
+                  {matchdayValue}
+                </span>
                 <span className="font-label-md text-label-md uppercase text-secondary">
-                  Goals Record
+                  Matchday
                 </span>
               </div>
               <div className="text-right">
                 <span className="font-stat-tabular text-stat-tabular font-bold text-primary">
-                  0.95 G/90
+                  {scorerCountValue}
                 </span>
                 <div className="font-label-sm text-label-sm uppercase text-secondary">
-                  Historical Pace
+                  Scorers
                 </div>
               </div>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-pill bg-surface-container-low">
-              <div
-                className="h-full bg-primary transition-[width] duration-500"
-                style={{ width: `${recordShare}%` }}
-              />
-            </div>
-            <span className="pt-1 font-label-sm text-label-sm text-secondary">{recordNote}</span>
+            <span className="pt-1 font-label-sm text-label-sm text-secondary">{seasonNote}</span>
           </div>
         </section>
       </div>

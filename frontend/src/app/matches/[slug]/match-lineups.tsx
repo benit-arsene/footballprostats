@@ -1,3 +1,4 @@
+import TeamCrest from "@/components/TeamCrest";
 import type { LineupPlayer, TeamSummary } from "@/lib/types";
 
 // Position row mapping for vertical pitch layout
@@ -110,14 +111,7 @@ export function MatchLineups({
           {/* ── Home team (top half) ── */}
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {homeTeam.crest_url ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={homeTeam.crest_url} alt="" className="h-6 w-6" />
-              ) : (
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[8px] font-bold text-white">
-                  {homeTeam.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              <TeamCrest url={homeTeam.crest_url} alt={homeTeam.name} className="h-6 w-6 object-contain" fallback={<div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[8px] font-bold text-white">{homeTeam.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</div>} />
               <span className="text-sm font-bold text-white drop-shadow">{homeTeam.name}</span>
             </div>
             <span className="rounded bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
@@ -144,14 +138,7 @@ export function MatchLineups({
           {/* ── Away team (bottom half) ── */}
           <div className="mt-2 mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {awayTeam.crest_url ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={awayTeam.crest_url} alt="" className="h-6 w-6" />
-              ) : (
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[8px] font-bold text-white">
-                  {awayTeam.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              <TeamCrest url={awayTeam.crest_url} alt={awayTeam.name} className="h-6 w-6 object-contain" fallback={<div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-[8px] font-bold text-white">{awayTeam.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</div>} />
               <span className="text-sm font-bold text-white drop-shadow">{awayTeam.name}</span>
             </div>
             <span className="rounded bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">

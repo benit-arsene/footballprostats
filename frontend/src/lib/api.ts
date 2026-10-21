@@ -95,6 +95,10 @@ export function getLiveStandings(): Promise<{ season: string; last_updated: stri
   return apiFetch(`/api/v1/standings/live`);
 }
 
+export function getLiveTopScorers(): Promise<{ season: string; last_updated: string; scorers: any[]; }> {
+  return apiFetch(`/api/v1/standings/top-scorers-live`);
+}
+
 export function getSeasons(competitionId: number = 1): Promise<{ id: number; label: string }[]> {
   return apiFetch(`/api/v1/standings/seasons?competition_id=${competitionId}`);
 }

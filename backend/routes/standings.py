@@ -23,6 +23,9 @@ _LIVE_CACHE = {"data": None, "ts": 0.0}
 _LIVE_TTL = 600
 
 
+router = APIRouter(prefix="/api/v1/standings", tags=["standings"])
+
+
 # In-memory cache for live top scorers (60-minute TTL)
 _SCORERS_CACHE = {"data": None, "ts": 0.0}
 _SCORERS_TTL = 3600

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { MatchSummary, MatchStatus, StandingRow, LeagueProfile } from "@/lib/types";
-import { getLiveMatchesSummary, getLeague, getLiveStandings } from "@/lib/api";
+import { getLiveMatchesSummary, getLeague, getLiveStandings, getLiveTopScorers } from "@/lib/api";
 import { HOME_LEAGUE_IDS, HOMEPAGE_REFRESH_INTERVAL, LEAGUE_IDS } from "@/lib/constants";
 import { MOCK_STANDINGS, MOCK_MATCHES, MOCK_TOP_SCORERS } from "@/lib/mock-data";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -256,9 +256,9 @@ function StandingsWidget({ standings, leagueName, leagueSlug, lastUpdated }: { s
         </tbody>
       </table>
       <div className="border-t border-zinc-100 px-4 py-2.5">
-        <a href={`/leagues/${leagueSlug}`} className="text-[11px] font-medium text-zinc-400 hover:text-black">
-          Full standings
-        </a>
+          <a href="/standings" className="text-[11px] font-medium text-zinc-400 hover:text-black">
+            Full standings
+          </a>
       </div>
     </div>
   );
@@ -284,9 +284,9 @@ function TopScorersWidget({ scorers, leagueName, season }: { scorers: { player: 
         ))}
       </div>
       <div className="border-t border-zinc-100 px-4 py-2.5">
-        <a href="/players/top-scorers" className="text-[11px] font-medium text-zinc-400 hover:text-black">
-          Full scorers
-        </a>
+          <a href="/players/epl/topscorers/currentseason" className="text-[11px] font-medium text-zinc-400 hover:text-black">
+            Full scorers
+          </a>
       </div>
     </div>
   );
@@ -360,6 +360,8 @@ export default function Dashboard() {
   // League data for sidebar (standings + top scorers)
   const [leagueProfile, setLeagueProfile] = useState<LeagueProfile | null>(null);
   const [leagueLoading, setLeagueLoading] = useState(true);
+  const [liveScorers, setLiveScorers] = useState<any[]>([]);
+  const [scorersLoading, setScorersLoading] = useState(true);
 
   const fetchLive = useCallback(async () => {
     try {
@@ -403,8 +405,7 @@ export default function Dashboard() {
           slug: "premier-league-1",
           season: data.season,
           standings: data.rows.slice(0, 5),
-          top_scorers: MOCK_TOP_SCORERS,
-          last_updated: data.last_updated,
+          top_scorers: [],
         } as any);
       } catch {
         // Fallback handled via MOCK_STANDINGS / MOCK_TOP_SCORERS below
@@ -412,7 +413,18 @@ export default function Dashboard() {
         setLeagueLoading(false);
       }
     };
+    const fetchScorers = async () => {
+      try {
+        const data = await getLiveTopScorers();
+        setLiveScorers(data.scorers || []);
+      } catch {
+        setScorers([]);
+      } finally {
+        setScorersLoading(false);
+      }
+    };
     fetchLeague();
+    fetchScorers();
   }, []);
 
   // Merge: real API matches first, then mock for leagues not in API
@@ -425,7 +437,7 @@ export default function Dashboard() {
 
   // Sidebar data: real API or mock fallback
   const standings = leagueProfile?.standings ?? MOCK_STANDINGS;
-  const scorers = leagueProfile?.top_scorers ?? MOCK_TOP_SCORERS;
+  const scorers = liveScorers.length > 0 ? liveScorers : [];
   const leagueName = leagueProfile?.name ?? "Premier League";
   const season = leagueProfile?.season ?? "25/26";
 

@@ -47,7 +47,14 @@ def _scorers_season_label(payload: dict) -> str | None:
     return f"{start_year}/{start_year + 1}"
 
 
-# In-memory cache for live top scorers (90-minute TTL), keyed by competition id.
+@router.get("/competition-by-slug/{slug}")
+async def get_competition_by_slug(slug: str):
+    async with async_session() as session:
+        result = await session.execute(select(Competition).where(Competition.slug == slug))
+        competition = result.scalar_one_or_none()
+    if competition is None:
+        raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Competition not found: {slug}"}})
+    return {"id": competition.id, "name": competition.name, "slug": competition.slug}
 _SCORERS_CACHE = {}
 _SCORERS_TTL = 5400
 

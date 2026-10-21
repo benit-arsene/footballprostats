@@ -104,8 +104,12 @@ export type LiveTopScorersResponse = {
   scorers: LiveTopScorer[];
 };
 
-export function getLiveTopScorers(): Promise<LiveTopScorersResponse> {
-  return apiFetch(`/api/v1/standings/top-scorers-live`);
+export function getCompetitionBySlug(slug: string): Promise<{ id: number; name: string; slug: string }> {
+  return apiFetch(`/api/v1/standings/competition-by-slug/${slug}`);
+}
+
+export function getLiveTopScorers(competitionId: number = 39): Promise<LiveTopScorersResponse> {
+  return apiFetch(`/api/v1/standings/top-scorers-live?competition_id=${competitionId}`);
 }
 
 export function getSeasons(competitionId: number = 1): Promise<{ id: number; label: string }[]> {

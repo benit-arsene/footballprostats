@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { MatchSummary, MatchStatus, StandingRow, LeagueProfile } from "@/lib/types";
-import { getLiveMatchesSummary, getLeague, getStandingsBySeason, getSeasons } from "@/lib/api";
+import { getLiveMatchesSummary, getLeague, getLiveStandings } from "@/lib/api";
 import { HOME_LEAGUE_IDS, HOMEPAGE_REFRESH_INTERVAL, LEAGUE_IDS } from "@/lib/constants";
 import { MOCK_STANDINGS, MOCK_MATCHES, MOCK_TOP_SCORERS } from "@/lib/mock-data";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -222,7 +222,7 @@ function LeagueSection({ matches }: { matches: MatchSummary[] }) {
   );
 }
 
-function StandingsWidget({ standings, leagueName, leagueSlug }: { standings: StandingRow[]; leagueName: string; leagueSlug: string }) {
+function StandingsWidget({ standings, leagueName, leagueSlug, lastUpdated }: { standings: StandingRow[]; leagueName: string; leagueSlug: string; lastUpdated?: string }) {
   return (
     <div className="rounded-xl border border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-4 py-3">
@@ -397,20 +397,17 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchLeague = async () => {
       try {
-        const seasons = await getSeasons(1);
-        const latest = seasons.length > 0 ? seasons[seasons.length - 1] : null;
-        if (latest) {
-          const data = await getStandingsBySeason(latest.id);
-          setLeagueProfile({
-            name: "Premier League",
-            slug: "premier-league-1",
-            season: data.season,
-            standings: data.rows.slice(0, 5),
-            top_scorers: MOCK_TOP_SCORERS,
-          } as any);
-        }
+        const data = await getLiveStandings();
+        setLeagueProfile({
+          name: "Premier League",
+          slug: "premier-league-1",
+          season: data.season,
+          standings: data.rows.slice(0, 5),
+          top_scorers: MOCK_TOP_SCORERS,
+          last_updated: data.last_updated,
+        } as any);
       } catch {
-        // Fallback handled via MOCK_STANDINGS below
+        // Fallback handled via MOCK_STANDINGS / MOCK_TOP_SCORERS below
       } finally {
         setLeagueLoading(false);
       }
@@ -484,8 +481,8 @@ export default function Dashboard() {
                 <LoadingSpinner message="Loading standings..." />
               ) : (
                 <>
-                  {standings.length > 0 ? (
-                    <StandingsWidget standings={standings} leagueName={leagueName} leagueSlug={leagueProfile?.slug ?? "premier-league-1"} />
+                   {standings.length > 0 ? (
+                    <StandingsWidget standings={standings} leagueName={leagueName} leagueSlug={leagueProfile?.slug ?? "premier-league-1"} lastUpdated={(leagueProfile as any)?.last_updated} />
                   ) : (
                     <EmptyState message="No standings available" />
                   )}

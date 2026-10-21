@@ -7,7 +7,11 @@ Usage:
     cd backend && python -m ingestion.refresh_current
 """
 
-from __future__ import annotations
+import re
+
+
+def _normalize_name(name: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (name or "").lower())
 
 import asyncio
 import logging
@@ -142,7 +146,34 @@ async def run() -> int:
                 provider="football_data", external_id=fd_player_id, entity_type="player"
             )
             if existing_player is None:
-                logger.warning("No player mapping for football_data id=%s (%s) — skipping", fd_player_id, player_info.get("name"))
+                # Try name-based match (only if unambiguous).
+                async with async_session() as session:
+                    result = await session.execute(select(Player))
+                    db_players = list(result.scalars().all())
+                norm_fd = _normalize_name(player_info.get("name", ""))
+                candidates = [p for p in db_players if _normalize_name(p.name) == norm_fd and norm_fd]
+                if len(candidates) == 1:
+                    target = candidates[0]
+                    # Create mapping.
+                    async with async_session() as session:
+                        ext = ExternalId(
+                            entity_type="player",
+                            provider="football_data",
+                            external_id=fd_player_id,
+                            player_id=target.id,
+                        )
+                        session.add(ext)
+                        await session.commit()
+                    existing_player = await repo_player.get_by_external_id(
+                        provider="football_data", external_id=fd_player_id, entity_type="player"
+                    )
+                    logger.info("Mapped player %s -> internal_id=%s", player_info.get("name"), target.id)
+                else:
+                    logger.warning("No unambiguous player mapping for fd_id=%s (%s) — %d candidates",
+                                   fd_player_id, player_info.get("name"), len(candidates))
+                    ts_skipped += 1
+                    continue
+            if existing_player is None:
                 ts_skipped += 1
                 continue
             internal_player_id = existing_player["player_id"]

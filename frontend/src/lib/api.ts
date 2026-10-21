@@ -91,6 +91,10 @@ export function getStandingsBySeason(seasonId: number): Promise<{
   return apiFetch(`/api/v1/standings/${seasonId}`);
 }
 
+export function getLiveStandings(): Promise<{ season: string; last_updated: string; rows: any[]; }> {
+  return apiFetch(`/api/v1/standings/live`);
+}
+
 export function getSeasons(competitionId: number = 1): Promise<{ id: number; label: string }[]> {
   return apiFetch(`/api/v1/standings/seasons?competition_id=${competitionId}`);
 }

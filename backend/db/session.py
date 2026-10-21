@@ -17,7 +17,7 @@ engine = create_async_engine(
     max_overflow=DB_MAX_OVERFLOW,
     pool_recycle=DB_POOL_RECYCLE,
     echo=False,
-    connect_args={"ssl": True} if HAS_SSL else {},
+    connect_args={"ssl": "require"} if HAS_SSL else {},
 )
 
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

@@ -24,4 +24,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("image_ingestion_quota")
-"""

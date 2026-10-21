@@ -62,6 +62,10 @@ PROVIDER = "api_football"
 # and --max-requests.
 DAILY_REQUEST_BUDGET = 100
 DEFAULT_MAX_REQUESTS = 25
+DAILY_IMAGE_INGESTION_CAP = min(
+    int(os.getenv("IMAGE_INGESTION_DAILY_CAP", str(DAILY_REQUEST_BUDGET))),
+    DAILY_REQUEST_BUDGET,
+)
 
 
 # ─── Plan model ────────────────────────────────────────────────────────────
@@ -144,10 +148,23 @@ class QuotaLedger:
             row = (await session.execute(
                 select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
             )).scalar_one_or_none()
+    async def reserve(self, session) -> bool:
+        """Atomically reserve one slot for today. Returns False if cap reached."""
+        from sqlalchemy import select
+        today = self.utc_today()
+        async with session.begin():
+            row = (await session.execute(
+                select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
+            )).scalar_one_or_none()
             if row is None:
                 row = ImageIngestionQuota(utc_date=today, daily_cap=self.daily_cap, reserved=0, used=0)
                 session.add(row)
                 await session.flush()
+            else:
+                if row.daily_cap != self.daily_cap:
+                    raise ValueError(
+                        f"configured daily cap {self.daily_cap} conflicts with persisted cap {row.daily_cap}"
+                    )
             if row.reserved + row.used >= row.daily_cap:
                 return False
             row.reserved += 1
@@ -516,7 +533,7 @@ async def run(argv: list[str] | None = None) -> int:
         return 0
 
     budget = RequestBudget(args.max_requests)
-    ledger = QuotaLedger(args.max_requests)
+    ledger = QuotaLedger(DAILY_IMAGE_INGESTION_CAP)
     provider = ApiFootballProvider()
     stats = RunStats()
 

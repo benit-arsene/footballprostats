@@ -148,14 +148,6 @@ class QuotaLedger:
             row = (await session.execute(
                 select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
             )).scalar_one_or_none()
-    async def reserve(self, session) -> bool:
-        """Atomically reserve one slot for today. Returns False if cap reached."""
-        from sqlalchemy import select
-        today = self.utc_today()
-        async with session.begin():
-            row = (await session.execute(
-                select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
-            )).scalar_one_or_none()
             if row is None:
                 row = ImageIngestionQuota(utc_date=today, daily_cap=self.daily_cap, reserved=0, used=0)
                 session.add(row)

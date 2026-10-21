@@ -143,25 +143,34 @@ class QuotaLedger:
     async def reserve(self, session) -> bool:
         """Atomically reserve one slot for today. Returns False if cap reached."""
         from sqlalchemy import select
+        from sqlalchemy.exc import IntegrityError
+
         today = self.utc_today()
-        async with session.begin():
-            row = (await session.execute(
-                select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
-            )).scalar_one_or_none()
-            if row is None:
-                row = ImageIngestionQuota(utc_date=today, daily_cap=self.daily_cap, reserved=0, used=0)
-                session.add(row)
-                await session.flush()
-            else:
-                if row.daily_cap != self.daily_cap:
-                    raise ValueError(
-                        f"configured daily cap {self.daily_cap} conflicts with persisted cap {row.daily_cap}"
-                    )
-            if row.reserved + row.used >= row.daily_cap:
-                return False
-            row.reserved += 1
-            row.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
-        return True
+        for attempt in range(3):
+            try:
+                async with session.begin():
+                    row = (await session.execute(
+                        select(ImageIngestionQuota).where(ImageIngestionQuota.utc_date == today).with_for_update()
+                    )).scalar_one_or_none()
+                    if row is None:
+                        row = ImageIngestionQuota(utc_date=today, daily_cap=self.daily_cap, reserved=0, used=0)
+                        session.add(row)
+                        await session.flush()
+                    else:
+                        if row.daily_cap != self.daily_cap:
+                            raise ValueError(
+                                f"configured daily cap {self.daily_cap} conflicts with persisted cap {row.daily_cap}"
+                            )
+                    if row.reserved + row.used >= row.daily_cap:
+                        return False
+                    row.reserved += 1
+                    row.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+                return True
+            except IntegrityError:
+                if attempt == 2:
+                    raise
+                continue
+        raise RuntimeError("unreachable")
 
     async def reconcile(self, session, *, consumed: bool) -> None:
         """Move one reservation to used (if consumed) or release it."""

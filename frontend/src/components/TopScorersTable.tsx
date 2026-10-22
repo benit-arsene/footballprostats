@@ -994,9 +994,9 @@ export default function TopScorersTable({
             return (
               <article
                 key={player.id}
-                className="flex min-h-[300px] flex-col justify-between overflow-hidden rounded-[16px] border border-card-border bg-card-bg text-accent-dark shadow-subtle transition-all duration-200 hover:border-zinc-300 hover:shadow-card-hover md:col-span-6 lg:col-span-3"
+                className="flex min-h-[300px] flex-col overflow-hidden rounded-[16px] border border-card-border bg-card-bg text-accent-dark shadow-subtle transition-all duration-200 hover:border-zinc-300 hover:shadow-card-hover md:col-span-6 lg:col-span-3"
               >
-                <div className="space-y-[8px] px-[13px] pt-[10px] pb-[9px]">
+                <div className="space-y-[10px] px-[13px] pt-[10px] pb-[16px] flex-grow-1 flex flex-col justify-between">
                   {/* Top metadata bar */}
                     <div className="flex items-center justify-between gap-[6px] border-b border-zinc-100 pb-[7px]">
                       <span className="inline-flex items-center rounded-[5px] bg-accent-dark px-[6px] py-[2px] text-[9px]/[12px] font-bold tracking-wider text-white">
@@ -1026,7 +1026,7 @@ export default function TopScorersTable({
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <h2 className="truncate text-[17px]/[21px] font-extrabold tracking-tight text-accent-dark">
+                      <h2 className="truncate text-[17px]/[21px] font-extrabold tracking-tight text-accent-dark uppercase">
                         {player.name}
                       </h2>
                     </div>
@@ -1035,83 +1035,67 @@ export default function TopScorersTable({
                   {/* Core metric pillars */}
                   <div className="grid grid-cols-2 gap-[10px]">
                     <div className="relative overflow-hidden rounded-[10px] border border-zinc-100/90 bg-zinc-50 p-[10px]">
-                      <span className="mb-[3px] block text-[9px]/[12px] font-bold uppercase tracking-wider text-muted-text">
-                        Primary Record
+                      <span className="mb-[3px] block text-[11px]/[14px] font-bold uppercase tracking-wider text-muted-text">
+                        Goals
                       </span>
                       <div className="flex items-baseline gap-[5px]">
-                        <span className="font-mono text-[28px]/[30px] font-extrabold tracking-tight tabular-nums text-accent-dark">
+                        <span className="font-mono text-[36px]/[38px] font-extrabold tracking-tight tabular-nums text-accent-dark">
                           {player.goals}
-                        </span>
-                        <span className="text-[9px]/[12px] font-bold uppercase tracking-wide text-zinc-500">
-                          Goals
-                        </span>
-                      </div>
-                      <div className="mt-[6px]">
-                        <span className="inline-flex items-center rounded-[3px] bg-zinc-200 px-[5px] py-[1px] font-mono text-[9px]/[12px] font-semibold text-zinc-800">
-                          {goalsPerApp} / APP
                         </span>
                       </div>
                     </div>
 
                     <div className="relative overflow-hidden rounded-[10px] border border-zinc-100/90 bg-zinc-50 p-[10px]">
-                      <span className="mb-[3px] block text-[9px]/[12px] font-bold uppercase tracking-wider text-muted-text">
-                        Playmaking
+                      <span className="mb-[3px] block text-[11px]/[14px] font-bold uppercase tracking-wider text-muted-text">
+                        Assists
                       </span>
                       <div className="flex items-baseline gap-[5px]">
-                        <span className="font-mono text-[28px]/[30px] font-extrabold tracking-tight tabular-nums text-accent-dark">
+                        <span className="font-mono text-[36px]/[38px] font-extrabold tracking-tight tabular-nums text-accent-dark">
                           {player.assists}
-                        </span>
-                        <span className="text-[9px]/[12px] font-bold uppercase tracking-wide text-zinc-500">
-                          Assists
-                        </span>
-                      </div>
-                      <div className="mt-[6px]">
-                        <span className="inline-flex items-center rounded-[3px] bg-zinc-200 px-[5px] py-[1px] font-mono text-[9px]/[12px] font-semibold text-zinc-800">
-                          {player.ga} G+A Total
                         </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Tactical efficiency grid */}
-                  <div className="space-y-[6px]">
-                    <div className="flex items-center justify-between text-[9px]/[12px]">
-                      <span className="text-[9px]/[12px] font-bold uppercase tracking-wider text-muted-text">
-                        Efficiency
-                      </span>
-                      <span className="rounded-[3px] border border-zinc-200/60 bg-zinc-100 px-[6px] py-[1px] font-mono text-[9px]/[12px] font-bold text-zinc-700">
-                        Penalties: {player.penalties}
-                      </span>
+                    <div className="space-y-[6px]">
+                      <div className="flex items-center justify-between text-[9px]/[12px]">
+                        <span className="text-[9px]/[12px] font-bold uppercase tracking-wider text-muted-text">
+                          Efficiency
+                        </span>
+                        <span className="rounded-[3px] border border-zinc-200/60 bg-zinc-100 px-[6px] py-[1px] font-mono text-[9px]/[12px] font-bold text-zinc-700">
+                          Penalties: {player.penalties}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-[8px]">
+                        <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
+                          <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
+                            Apps
+                          </span>
+                          <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
+                            {player.apps === null ? DASH : player.apps}
+                          </span>
+                        </div>
+                        <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
+                          <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
+                            Goals / App
+                          </span>
+                          <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
+                            {goalsPerApp}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-[8px]">
-                      <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
-                        <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
-                          Apps
-                        </span>
-                        <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
-                          {player.apps === null ? DASH : player.apps}
-                        </span>
-                      </div>
-                      <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
-                        <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
-                          Goals / App
-                        </span>
-                        <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
-                          {goalsPerApp}
-                        </span>
-                      </div>
+
+                    {/* Card footer */}
+                    <div className="flex items-center justify-between border-t border-card-border bg-zinc-50/80 px-[13px] py-[6px]">
+                      <span className="font-medium text-zinc-600 text-[10px]/[13px]">
+                        Total Goal Involvement:{" "}
+                        <strong className="font-mono font-bold text-accent-dark text-[12px]/[14px]">{player.ga}</strong>
+                      </span>
                     </div>
                   </div>
-                </div>
-
-                {/* Card footer */}
-                <div className="flex items-center justify-between border-t border-card-border bg-zinc-50/80 px-[13px] py-[6px] text-[9px]/[13px]">
-                  <span className="font-medium text-zinc-600">
-                    Total Goal Involvement:{" "}
-                    <strong className="font-mono font-bold text-accent-dark">{player.ga}</strong>
-                  </span>
-                </div>
-              </article>
+                </article>
             );
           })}
         </section>

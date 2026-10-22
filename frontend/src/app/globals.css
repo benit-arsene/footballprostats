@@ -176,6 +176,16 @@
   --radius-chip: 2px;
   --radius-card: 8px;
   --radius-pill: 12px;
+
+  /* Player comparison card palette (docs/reference1.html) */
+  --color-card-bg: #ffffff;
+  --color-card-border: #e4e4e7;
+  --color-accent-dark: #09090b;
+  --color-muted-text: #71717a;
+  --color-emerald-badge: #ecfdf5;
+  --color-emerald-text: #059669;
+  --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
 }
 
 /* Reference canvas runs on a 16px spacing unit despite the 66.67% root. */

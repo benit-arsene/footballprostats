@@ -881,13 +881,13 @@ export default function TopScorersTable({
         {/* ─── Podium / leaders spotlight ───────────────────────────── */}
         <section className="grid grid-cols-1 gap-space-md md:grid-cols-12">
           {leader ? (
-            <article className="relative flex flex-col justify-between overflow-hidden rounded-card bg-primary p-space-lg text-on-primary shadow-md md:col-span-12 lg:col-span-6">
+            <article className="relative flex flex-col justify-center overflow-hidden rounded-card bg-primary p-space-lg text-on-primary shadow-md md:col-span-12 lg:col-span-6">
               <div className="pointer-events-none absolute -right-10 -bottom-10 select-none opacity-10">
                 <span className="text-[240px] font-extrabold leading-none tracking-tighter">01</span>
               </div>
 
-              <div className="relative z-10 flex flex-col gap-space-md">
-                <div className="flex flex-wrap items-center justify-between gap-space-sm">
+              <div className="relative z-10 flex flex-col gap-space-md justify-center h-full">
+                <div className="flex flex-wrap items-center justify-between gap-space-sm w-full">
                   <div className="flex items-center gap-space-xs">
                     <span className="flex items-center gap-1 rounded-chip bg-surface-container-lowest px-space-sm py-1 font-label-sm text-label-sm font-extrabold uppercase tracking-widest text-primary">
                       <span
@@ -909,16 +909,16 @@ export default function TopScorersTable({
                   </div>
                 </div>
 
-                <div className="flex flex-col items-start justify-between gap-space-md pt-space-xs sm:flex-row sm:items-center">
+                <div className="flex flex-col items-center justify-between gap-space-md pt-space-xs sm:flex-row sm:items-center sm:justify-between w-full my-auto">
                   <div className="flex items-center gap-space-md">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-card bg-surface-container-lowest font-headline-lg text-headline-lg font-extrabold text-primary shadow-sm">
+                    <div className="flex h-18 w-18 items-center justify-center rounded-card bg-surface-container-lowest font-headline-xl text-headline-xl font-extrabold text-primary shadow-sm">
                       {leader.initials}
                     </div>
-                    <div className="flex flex-col">
-                      <h2 className="font-headline-lg text-headline-lg uppercase tracking-tight text-on-primary">
+                    <div className="flex flex-col justify-center">
+                      <h2 className="font-headline-xl text-headline-xl uppercase tracking-tight text-on-primary">
                         {leader.name}
                       </h2>
-                      <div className="flex flex-wrap items-center gap-space-xs font-label-md text-label-md uppercase text-on-primary-container">
+                      <div className="flex flex-wrap items-center gap-space-xs font-label-lg text-label-lg uppercase text-on-primary-container">
                         <span>
                           {leader.position}
                           {leader.shirtNumber !== null ? ` (#${leader.shirtNumber})` : ""}
@@ -929,15 +929,15 @@ export default function TopScorersTable({
                     </div>
                   </div>
 
-                  <div className="flex items-baseline justify-center gap-2 self-stretch rounded-card bg-surface-container-highest/25 px-space-lg py-space-xs shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] sm:self-auto">
-                    <span className="font-stat-display text-[46px] font-extrabold leading-none text-on-primary">
+                  <div className="flex items-center justify-center gap-2 self-stretch rounded-card bg-surface-container-highest/25 px-space-lg py-space-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] sm:self-center">
+                    <span className="font-stat-display text-[50px] font-extrabold leading-none text-on-primary self-center">
                       {leader.goals}
                     </span>
-                    <div className="flex flex-col">
-                      <span className="font-label-sm text-label-sm uppercase tracking-widest text-on-primary">
+                    <div className="flex flex-col justify-center self-center">
+                      <span className="font-label-md text-label-md uppercase tracking-widest text-on-primary">
                         Goals
                       </span>
-                      <span className="font-label-sm text-label-sm text-on-primary-container">
+                      <span className="font-label-md text-label-md text-on-primary-container">
                         {leader.apps && leader.apps > 0
                           ? `${(leader.goals / leader.apps).toFixed(2)} / APP`
                           : `${DASH} / APP`}
@@ -998,14 +998,9 @@ export default function TopScorersTable({
               >
                 <div className="space-y-[8px] px-[13px] pt-[10px] pb-[9px]">
                   {/* Top metadata bar */}
-                  <div className="flex items-center justify-between gap-[6px] border-b border-zinc-100 pb-[7px]">
-                    <span className="inline-flex items-center rounded-[5px] bg-accent-dark px-[6px] py-[2px] text-[9px]/[12px] font-bold tracking-wider text-white">
-                      #{String(player.rank).padStart(2, "0")} RANK
-                    </span>
-                    <div className="flex min-w-0 items-center gap-[5px] text-[9px]/[12px] font-semibold tracking-wide text-zinc-600">
-                      <span className="font-bold text-accent-dark">{player.nationCode}</span>
-                      <span className="text-zinc-300" aria-hidden="true">
-                        •
+                    <div className="flex items-center justify-between gap-[6px] border-b border-zinc-100 pb-[7px]">
+                      <span className="inline-flex items-center rounded-[5px] bg-accent-dark px-[6px] py-[2px] text-[9px]/[12px] font-bold tracking-wider text-white">
+                        RANK {String(player.rank).padStart(2, "0")}
                       </span>
                       <span className="inline-flex min-w-0 items-center gap-[4px] rounded-[3px] border border-zinc-200/80 bg-zinc-50 px-[5px] py-[2px] text-[9px]/[12px] font-medium text-zinc-700">
                         <TeamCrest
@@ -1016,7 +1011,6 @@ export default function TopScorersTable({
                         <span className="truncate">{player.club}</span>
                       </span>
                     </div>
-                  </div>
 
                   {/* Player bio */}
                   <div className="flex items-center gap-[12px]">
@@ -1030,23 +1024,11 @@ export default function TopScorersTable({
                       >
                         {player.initials}
                       </div>
-                      <span
-                        className={`absolute -bottom-[3px] -right-[3px] rounded-full border border-white px-[4px] text-[8px]/[10px] font-extrabold uppercase ${
-                          isRunnerUp ? "bg-zinc-200 text-zinc-800" : "bg-accent-dark text-white"
-                        }`}
-                      >
-                        {player.positionCode}
-                      </span>
                     </div>
                     <div className="min-w-0">
-                      <h2 className="truncate text-[15px]/[19px] font-extrabold tracking-tight text-accent-dark">
+                      <h2 className="truncate text-[17px]/[21px] font-extrabold tracking-tight text-accent-dark">
                         {player.name}
                       </h2>
-                      <div className="mt-[1px] flex flex-wrap items-center gap-[5px] text-[9px]/[13px] font-medium text-muted-text">
-                        <span className="truncate">{player.position}</span>
-                        <span aria-hidden="true">•</span>
-                        <span>{player.apps !== null ? `${player.apps} Apps` : `Apps ${DASH}`}</span>
-                      </div>
                     </div>
                   </div>
 
@@ -1101,7 +1083,7 @@ export default function TopScorersTable({
                         Penalties: {player.penalties}
                       </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-[8px]">
+                    <div className="grid grid-cols-2 gap-[8px]">
                       <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
                         <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
                           Apps
@@ -1116,14 +1098,6 @@ export default function TopScorersTable({
                         </span>
                         <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
                           {goalsPerApp}
-                        </span>
-                      </div>
-                      <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
-                        <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
-                          Non-Pen Goals
-                        </span>
-                        <span className="inline-block rounded-[3px] bg-emerald-badge px-[5px] py-[1px] font-mono text-[11px]/[13px] font-bold tabular-nums text-emerald-text">
-                          {nonPenGoals}
                         </span>
                       </div>
                     </div>

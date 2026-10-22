@@ -66,13 +66,16 @@ class TestRouteCompatibility:
 
     def test_api_routes_exist(self, client):
         """Key API routes should be registered."""
-        routes = [r.path for r in client.routes]
+        from main import app
+
+        routes = [r.path for r in app.routes]
         assert "/api/v1/matches/live" in routes or any(
-            "matches/live" in r.path for r in client.routes
+            "matches/live" in r.path for r in app.routes
         )
         assert "/api/v1/teams" in routes or any(
-            "teams" in r.path for r in client.routes
+            "teams" in r.path for r in app.routes
         )
         assert "/api/v1/leagues" in routes or any(
-            "leagues" in r.path for r in client.routes
+            "leagues" in r.path for r in app.routes
         )
+        assert "/api/v1/standings/top-scorers-live" in routes

@@ -30,3 +30,18 @@ def get_season_year() -> int:
     if now.month >= 8:
         return now.year
     return now.year - 1
+
+
+# ─── CORS ─────────────────────────────────────────────────────────────────
+
+# Origins allowed to call the API. The Next.js dev server is reachable on
+# both localhost and 127.0.0.1, and the browser sends the origin it was
+# opened with.
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    ).split(",")
+    if origin.strip()
+]

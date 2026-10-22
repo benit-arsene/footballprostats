@@ -16,7 +16,7 @@ import type {
   LeagueProfile,
   LiveTopScorer,
 } from "./types";
-import { API_BASE, POLL_INTERVALS, POLLING_ENABLED } from "./constants";
+import { API_BASE, COMPETITION_IDS, POLL_INTERVALS, POLLING_ENABLED } from "./constants";
 
 // ─── Generic fetch helper ─────────────────────────────────────────────
 
@@ -98,6 +98,8 @@ export function getLiveStandings(): Promise<{ season: string; last_updated: stri
 
 export type LiveTopScorersResponse = {
   season: string | null;
+  /** Display name of the competition the rows belong to, e.g. "Premier League". */
+  competition_name: string | null;
   current_matchday: number | null;
   scorers_count: number | null;
   goals_total: number | null;
@@ -108,7 +110,7 @@ export function getCompetitionBySlug(slug: string): Promise<{ id: number; name: 
   return apiFetch(`/api/v1/standings/competition-by-slug/${slug}`);
 }
 
-export function getLiveTopScorers(competitionId: number = 39): Promise<LiveTopScorersResponse> {
+export function getLiveTopScorers(competitionId: number = COMPETITION_IDS.premier_league): Promise<LiveTopScorersResponse> {
   return apiFetch(`/api/v1/standings/top-scorers-live?competition_id=${competitionId}`);
 }
 

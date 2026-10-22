@@ -32,6 +32,10 @@ export type ScorerInput = {
 
 type Props = {
   scorers: ScorerInput[];
+  /** Display name of the competition the rows belong to, e.g. "Premier League". */
+  competitionName: string;
+  /** Provider competition id that the matchday highlights are filtered by. */
+  competitionProviderId: number;
   season?: string | null;
   currentMatchday?: number | null;
   scorersCount?: number | null;
@@ -541,6 +545,8 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
 export default function TopScorersTable({
   scorers,
+  competitionName,
+  competitionProviderId,
   season,
   currentMatchday = null,
   scorersCount = null,
@@ -669,7 +675,7 @@ export default function TopScorersTable({
       highlights
         .filter(
           (match) =>
-            match.league?.name === "Premier League" &&
+            match.league?.id === competitionProviderId &&
             (match.status === "live" || match.status === "scheduled"),
         )
         .slice(0, 4)
@@ -688,7 +694,7 @@ export default function TopScorersTable({
                 : "Live"
               : kickoffLabel(match.date, match.kickoff_time),
         })),
-    [highlights],
+    [highlights, competitionProviderId],
   );
 
   function toggleSort(nextKey: SortKey) {
@@ -812,7 +818,7 @@ export default function TopScorersTable({
         <header className="flex flex-col justify-between gap-space-lg py-space-sm lg:flex-row lg:items-end mb-space-lg">
           <div className="flex max-w-[768px] flex-col gap-space-xs">
             <h1 className="font-headline-xl text-headline-xl uppercase tracking-tight text-primary">
-              Premier League Top Scorers
+              {competitionName} Top Scorers
             </h1>
           </div>
 
@@ -1193,7 +1199,7 @@ export default function TopScorersTable({
           <div className="w-full overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <caption className="sr-only">
-                Premier League top scorers, season {seasonValue}. Sortable by player, club and every
+                {competitionName} top scorers, season {seasonValue}. Sortable by player, club and every
                 performance column.
               </caption>
               <thead>

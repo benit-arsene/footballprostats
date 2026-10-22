@@ -1,14 +1,16 @@
 """Standings-related API endpoints (database-backed).
 
 Endpoints:
-  GET /api/v1/standings/seasons        — list available seasons for a competition
-  GET /api/v1/standings/{season_label} — standings rows for a season from Neon
+  GET /api/v1/standings/seasons          — list available seasons for a competition
+  GET /api/v1/standings/{season_id}      — standings rows for a season from Neon
+  GET /api/v1/standings/top-scorers-live — live top scorers for a competition
 """
 
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
 from config import get_season_year
 
+from db.models.competition import Competition
 from db.models.external_id import ExternalId
 from db.models.season import Season
 from db.models.standing_row import StandingRow
@@ -22,6 +24,12 @@ import time
 # In-memory cache for live standings (10-minute TTL)
 _LIVE_CACHE = {"data": None, "ts": 0.0}
 _LIVE_TTL = 600
+
+# In-memory cache for live top scorers (90-minute TTL), keyed by the
+# football-data.org competition id so the same competition is cached once
+# regardless of how the caller referenced it.
+_SCORERS_CACHE: dict[int, dict] = {}
+_SCORERS_TTL = 5400
 
 
 router = APIRouter(prefix="/api/v1/standings", tags=["standings"])
@@ -55,54 +63,121 @@ async def get_competition_by_slug(slug: str):
     if competition is None:
         raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Competition not found: {slug}"}})
     return {"id": competition.id, "name": competition.name, "slug": competition.slug}
-_SCORERS_CACHE = {}
-_SCORERS_TTL = 5400
+
+
+def _football_data_competition_id(ext: ExternalId) -> int | None:
+    """Map an external-id row to a football-data.org competition id."""
+    from providers.football_data.adapters import CODE_TO_COMPETITION_ID, COMPETITION_CODE_MAP
+
+    if ext.provider == "football_data":
+        return CODE_TO_COMPETITION_ID.get(ext.external_id)
+    # api_football and football-data.org share the same numeric competition ids.
+    try:
+        value = int(ext.external_id)
+    except (TypeError, ValueError):
+        return None
+    return value if value in COMPETITION_CODE_MAP else None
+
+
+async def _resolve_scorers_competition_id(competition_id: int) -> int:
+    """Resolve a competition reference to a football-data.org competition id.
+
+    The canonical reference is the internal competition id used across the
+    standings API (Premier League = 1, La Liga = 2). A provider-side
+    competition id (39 for the Premier League, 140 for La Liga) is accepted
+    as well so callers that already track provider ids keep working.
+    """
+    from providers.football_data.adapters import COMPETITION_CODE_MAP
+
+    async with async_session() as session:
+        result = await session.execute(
+            select(ExternalId).where(
+                ExternalId.entity_type == "competition",
+                ExternalId.competition_id == competition_id,
+            )
+        )
+        rows = list(result.scalars().all())
+
+        if not rows:
+            result = await session.execute(
+                select(ExternalId).where(
+                    ExternalId.entity_type == "competition",
+                    ExternalId.external_id == str(competition_id),
+                )
+            )
+            rows = list(result.scalars().all())
+
+        if not rows:
+            code = COMPETITION_CODE_MAP.get(competition_id)
+            if code is not None:
+                result = await session.execute(
+                    select(ExternalId).where(
+                        ExternalId.entity_type == "competition",
+                        ExternalId.provider == "football_data",
+                        ExternalId.external_id == code,
+                    )
+                )
+                rows = list(result.scalars().all())
+
+    if not rows:
+        raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": "Competition mapping not found"}})
+
+    rows.sort(key=lambda r: 0 if r.provider == "football_data" else 1)
+    for ext in rows:
+        resolved = _football_data_competition_id(ext)
+        if resolved is not None:
+            return resolved
+
+    raise HTTPException(status_code=400, detail={"error": {"code": "UNSUPPORTED_COMPETITION", "message": f"Unsupported competition id: {competition_id}"}})
+
+
+async def _scorers_competition_name(provider_competition_id: int) -> str | None:
+    """Display name of the competition a scorers payload belongs to.
+
+    Used as a fallback when the provider omits the competition block. The name
+    comes from the `competitions` row so it always matches the rows that were
+    rendered next to it.
+    """
+    from providers.football_data.adapters import COMPETITION_CODE_MAP
+
+    candidates = {str(provider_competition_id)}
+    code = COMPETITION_CODE_MAP.get(provider_competition_id)
+    if code is not None:
+        candidates.add(code)
+
+    async with async_session() as session:
+        result = await session.execute(
+            select(ExternalId).where(
+                ExternalId.entity_type == "competition",
+                ExternalId.external_id.in_(candidates),
+            )
+        )
+        rows = list(result.scalars().all())
+
+    for ext in rows:
+        if ext.competition_id is None:
+            continue
+        async with async_session() as session:
+            result = await session.execute(
+                select(Competition).where(Competition.id == ext.competition_id)
+            )
+            competition = result.scalar_one_or_none()
+        if competition is not None and competition.name:
+            return competition.name
+    return None
 
 
 @router.get("/top-scorers-live")
 async def get_live_top_scorers(competition_id: int):
+    """Live top scorers for a competition.
 
-    async with async_session() as session:
-        ext_result = await session.execute(
-            select(ExternalId).where(
-                ExternalId.entity_type == "competition",
-                ExternalId.competition_id == competition_id,
-                ExternalId.provider == "football_data",
-            )
-        )
-        ext = ext_result.scalar_one_or_none()
-
-        if ext is None:
-            fallback_result = await session.execute(
-                select(ExternalId).where(
-                    ExternalId.entity_type == "competition",
-                    ExternalId.competition_id == competition_id,
-                    ExternalId.provider == "api_football",
-                )
-            )
-            ext = fallback_result.scalar_one_or_none()
-            fallback_provider = True
-        else:
-            fallback_provider = False
-
-    if ext is None or ext.external_id is None:
-        raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": "Competition mapping not found"}})
-
-    if fallback_provider:
-        try:
-            provider_competition_id = int(ext.external_id)
-        except (TypeError, ValueError):
-            raise HTTPException(status_code=400, detail={"error": {"code": "INVALID_COMPETITION", "message": "Invalid provider competition id"}})
-        from providers.football_data.adapters import COMPETITION_CODE_MAP
-        if provider_competition_id not in COMPETITION_CODE_MAP:
-            raise HTTPException(status_code=400, detail={"error": {"code": "UNSUPPORTED_COMPETITION", "message": f"Unsupported competition id: {provider_competition_id}"}})
-    else:
-        provider_competition_id = CODE_TO_COMPETITION_ID.get(ext.external_id)
-        if provider_competition_id is None:
-            raise HTTPException(status_code=400, detail={"error": {"code": "UNSUPPORTED_COMPETITION", "message": f"Unsupported competition code: {ext.external_id}"}})
+    `competition_id` is the internal competition id; provider-side competition
+    ids are accepted as a fallback.
+    """
+    provider_competition_id = await _resolve_scorers_competition_id(competition_id)
 
     now = time.time()
-    cached = _SCORERS_CACHE.get(competition_id)
+    cached = _SCORERS_CACHE.get(provider_competition_id)
     if cached is not None and (now - cached["ts"]) < _SCORERS_TTL:
         return cached["data"]
     try:
@@ -148,14 +223,22 @@ async def get_live_top_scorers(competition_id: int):
                 "penalties": r.get("penalties"),
             })
         provider_season = payload.get("season") or {}
+        provider_competition = payload.get("competition") or {}
+        competition_name = provider_competition.get("name")
+        if not competition_name:
+            try:
+                competition_name = await _scorers_competition_name(provider_competition_id)
+            except Exception:
+                competition_name = None
         data = {
             "season": _scorers_season_label(payload),
+            "competition_name": competition_name,
             "current_matchday": provider_season.get("currentMatchday"),
             "scorers_count": payload.get("count") or len(rows),
             "goals_total": goals_total,
             "scorers": rows,
         }
-        _SCORERS_CACHE[competition_id] = {"data": data, "ts": now}
+        _SCORERS_CACHE[provider_competition_id] = {"data": data, "ts": now}
         return data
     except HTTPException:
         raise
@@ -299,7 +382,7 @@ async def get_standings_by_season(season_id: int):
         if snapshot is None:
             raise HTTPException(
                 status_code=404,
-                detail={"error": {"code": "NOT_FOUND", "message": f"No standings for season {season_label}"}},
+                detail={"error": {"code": "NOT_FOUND", "message": f"No standings for season {season.label}"}},
             )
 
         rows_result = await session.execute(

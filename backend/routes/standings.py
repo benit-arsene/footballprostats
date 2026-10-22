@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
 from config import get_season_year
 
-from db.models.competition import Competition
+from db.models.external_id import ExternalId
 from db.models.season import Season
 from db.models.standing_row import StandingRow
 from db.models.standing_snapshot import StandingSnapshot
@@ -60,14 +60,46 @@ _SCORERS_TTL = 5400
 
 
 @router.get("/top-scorers-live")
-async def get_live_top_scorers(competition_id: int = 39):
-    from providers.football_data.adapters import COMPETITION_CODE_MAP
+async def get_live_top_scorers(competition_id: int):
 
-    if competition_id not in COMPETITION_CODE_MAP:
-        raise HTTPException(
-            status_code=400,
-            detail={"error": {"code": "UNSUPPORTED_COMPETITION", "message": f"Unsupported competition id: {competition_id}"}},
+    async with async_session() as session:
+        ext_result = await session.execute(
+            select(ExternalId).where(
+                ExternalId.entity_type == "competition",
+                ExternalId.competition_id == competition_id,
+                ExternalId.provider == "football_data",
+            )
         )
+        ext = ext_result.scalar_one_or_none()
+
+        if ext is None:
+            fallback_result = await session.execute(
+                select(ExternalId).where(
+                    ExternalId.entity_type == "competition",
+                    ExternalId.competition_id == competition_id,
+                    ExternalId.provider == "api_football",
+                )
+            )
+            ext = fallback_result.scalar_one_or_none()
+            fallback_provider = True
+        else:
+            fallback_provider = False
+
+    if ext is None or ext.external_id is None:
+        raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": "Competition mapping not found"}})
+
+    if fallback_provider:
+        try:
+            provider_competition_id = int(ext.external_id)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail={"error": {"code": "INVALID_COMPETITION", "message": "Invalid provider competition id"}})
+        from providers.football_data.adapters import COMPETITION_CODE_MAP
+        if provider_competition_id not in COMPETITION_CODE_MAP:
+            raise HTTPException(status_code=400, detail={"error": {"code": "UNSUPPORTED_COMPETITION", "message": f"Unsupported competition id: {provider_competition_id}"}})
+    else:
+        provider_competition_id = CODE_TO_COMPETITION_ID.get(ext.external_id)
+        if provider_competition_id is None:
+            raise HTTPException(status_code=400, detail={"error": {"code": "UNSUPPORTED_COMPETITION", "message": f"Unsupported competition code: {ext.external_id}"}})
 
     now = time.time()
     cached = _SCORERS_CACHE.get(competition_id)
@@ -81,7 +113,7 @@ async def get_live_top_scorers(competition_id: int = 39):
         if "football_data" not in available:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "football-data.org not configured"}})
         provider = registry.get_provider("football_data")
-        payload = await provider.get_top_scorers_payload(competition_id, get_season_year())
+        payload = await provider.get_top_scorers_payload(provider_competition_id, get_season_year())
         raw = payload.get("scorers", [])
         if not raw:
             raise HTTPException(status_code=503, detail={"error": {"code": "UNAVAILABLE", "message": "No scorers available"}})

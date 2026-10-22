@@ -10,8 +10,8 @@ const SLUG_TO_DB_SLUG: Record<string, string> = {
 
 export const dynamic = "force-dynamic";
 
-export default async function CompetitionTopScorersPage({ params }: { params: Promise<{ competition: string }> }) {
-  const { competition } = await params;
+export default async function CompetitionTopScorersPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug: competition } = await params;
   const dbSlug = SLUG_TO_DB_SLUG[competition];
   if (!dbSlug) {
     return <main className="p-8">Unsupported competition.</main>;

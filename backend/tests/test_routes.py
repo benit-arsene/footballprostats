@@ -59,10 +59,10 @@ class TestRouteCompatibility:
     def test_match_detail_404_format(self, client):
         """Not found returns structured error body."""
         resp = client.get("/api/v1/matches/999999")
-        if resp.status_code == 404:
-            body = resp.json()
-            assert "error" in body
-            assert body["error"]["code"] == "NOT_FOUND"
+        assert resp.status_code == 404
+        body = resp.json()
+        assert "detail" in body
+        assert body["detail"]["error"]["code"] == "NOT_FOUND"
 
     def test_api_routes_exist(self, client):
         """Key API routes should be registered."""

@@ -11,13 +11,20 @@ Endpoints:
 import time
 
 from fastapi import APIRouter, HTTPException
+from sqlalchemy import select
 
 from models import LiveMatchUpdate, MatchDetail, MatchStatus, MatchSummary
 from services import football_api
 from services.mapper import map_match_detail, map_match_summary
 from config import HOME_LEAGUE_IDS, get_season_year
+from db.models.external_id import ExternalId
+from db.session import async_session
+from providers.factory import build_provider_registry
 
 router = APIRouter(prefix="/api/v1/matches", tags=["matches"])
+
+# Provider registry — single source of truth for provider instances.
+_registry = build_provider_registry()
 
 # In-memory cache for the matchday window (60-second TTL)
 _WINDOW_CACHE: dict[int, dict] = {}
@@ -115,23 +122,64 @@ async def get_matches_by_date(date: str):
         raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})
 
 
+async def _resolve_match_fixture(match_id: int) -> dict | None:
+    """Resolve the provider for a match ID via the external_ids mapping.
+
+    The ID in the URL is a provider-specific external match ID. It is never
+    sent to a provider unless the external_ids table establishes which provider
+    owns it. When no mapping exists (or the mapped provider is not registered),
+    this returns None instead of guessing — so a football-data.org ID is never
+    queried against API-Football, and vice versa.
+    """
+    async with async_session() as session:
+        result = await session.execute(
+            select(ExternalId).where(
+                ExternalId.entity_type == "match",
+                ExternalId.external_id == str(match_id),
+            )
+        )
+        ext = result.scalar_one_or_none()
+
+    if ext is None or not ext.provider:
+        return None
+
+    if not _registry.has_provider(ext.provider):
+        return None
+
+    provider = _registry.get_provider(ext.provider)
+    return await provider.get_fixture(match_id)
+
+
 @router.get("/{match_id}", response_model=MatchDetail)
 async def get_match_detail(match_id: int):
     """
     Core match endpoint: returns full details including teams,
     scores, status, lineups, and current stats.
+
+    The match ID is resolved to a provider via the external_ids mapping. If no
+    mapping establishes the provider, the request is rejected with 404 instead
+    of risking an unrelated fixture from the wrong provider.
     """
     try:
-        fixture = await football_api.get_fixture(match_id, season=get_season_year())
+        fixture = await _resolve_match_fixture(match_id)
         if not fixture:
-            raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}})
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}},
+            )
         return map_match_detail(fixture)
     except HTTPException:
         raise
-    except football_api.APIRateLimitError as e:
-        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
-    except football_api.APIError as e:
-        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})
+    except Exception as e:
+        if type(e).__name__ == "APIRateLimitError":
+            raise HTTPException(
+                status_code=429,
+                detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}},
+            )
+        raise HTTPException(
+            status_code=502,
+            detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}},
+        )
 
 
 @router.get("/{match_id}/events", response_model=MatchDetail)
@@ -139,15 +187,26 @@ async def get_match_events(match_id: int):
     """
     Complete chronological event stream for a match.
     Returns the match detail with the full events array ordered by minute.
+
+    Uses the same provider-resolution logic as get_match_detail.
     """
     try:
-        fixture = await football_api.get_fixture(match_id, season=get_season_year())
+        fixture = await _resolve_match_fixture(match_id)
         if not fixture:
-            raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}})
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}},
+            )
         return map_match_detail(fixture)
     except HTTPException:
         raise
-    except football_api.APIRateLimitError as e:
-        raise HTTPException(status_code=429, detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}})
-    except football_api.APIError as e:
-        raise HTTPException(status_code=502, detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}})
+    except Exception as e:
+        if type(e).__name__ == "APIRateLimitError":
+            raise HTTPException(
+                status_code=429,
+                detail={"error": {"code": "UPSTREAM_RATE_LIMITED", "message": str(e)}},
+            )
+        raise HTTPException(
+            status_code=502,
+            detail={"error": {"code": "UPSTREAM_ERROR", "message": str(e)}},
+        )

@@ -14,6 +14,8 @@ import type {
   TeamProfile,
   PlayerProfile,
   LeagueProfile,
+  StandingRow,
+  TopScorer,
   LiveTopScorer,
 } from "./types";
 import { API_BASE, COMPETITION_IDS, POLL_INTERVALS, POLLING_ENABLED } from "./constants";
@@ -76,6 +78,22 @@ export function getLeague(leagueId: number): Promise<LeagueProfile> {
 
 export function getCompetition(competitionId: number): Promise<LeagueProfile> {
   return apiFetch(`/api/v1/competitions/${competitionId}`);
+}
+
+export function getCompetitionStandings(competitionId: number): Promise<StandingRow[]> {
+  return apiFetch(`/api/v1/competitions/${competitionId}/standings`);
+}
+
+export function getCompetitionTopScorers(competitionId: number): Promise<TopScorer[]> {
+  return apiFetch(`/api/v1/competitions/${competitionId}/top-scorers`);
+}
+
+export function getCompetitionFixtures(competitionId: number): Promise<MatchSummary[]> {
+  return apiFetch(`/api/v1/competitions/${competitionId}/fixtures`);
+}
+
+export function getCompetitionResults(competitionId: number): Promise<MatchSummary[]> {
+  return apiFetch(`/api/v1/competitions/${competitionId}/results`);
 }
 
 // ─── Standings endpoints (database-backed) ─────────────────────────────

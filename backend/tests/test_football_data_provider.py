@@ -69,7 +69,15 @@ class TestExternalIdExtraction:
         assert extract_match_external_ids({}) == []
 
     def test_competition_external_ids(self):
-        assert extract_competition_external_ids({"id": 2021}) == [("football_data", "2021")]
+        # football-data.org fixtures are keyed by competition code, so the
+        # canonical stored mapping is the code, never the numeric id.
+        assert extract_competition_external_ids({"id": 2021, "code": "PL"}) == [
+            ("football_data", "PL")
+        ]
+        assert extract_competition_external_ids({"id": 2014, "code": "PD"}) == [
+            ("football_data", "PD")
+        ]
+        assert extract_competition_external_ids({"id": 2021}) == []
         assert extract_competition_external_ids({}) == []
 
 

@@ -36,3 +36,17 @@ def extract_league_external_ids(api_league: dict) -> list[tuple[str, str]]:
     if league and "id" in league:
         results.append(("api_football", str(league["id"])))
     return results
+
+
+def canonical_league_id(value: str | int) -> str:
+    """Validate and normalise an API-Football league id for storage.
+
+    API-Football competitions are keyed by their own numeric league id (for
+    example ``39``). Competition codes from another provider are rejected.
+    """
+    raw = str(value if value is not None else "").strip()
+    if not raw.isdigit():
+        raise ValueError(
+            f"{value!r} is not a numeric API-Football league id"
+        )
+    return str(int(raw))

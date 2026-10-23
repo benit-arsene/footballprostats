@@ -10,6 +10,7 @@ from db.models.competition import Competition
 from db.models.external_id import ExternalId
 from db.models.season import Season
 from db.session import async_session
+from ingestion.service import register_competition_mapping
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("register_laliga")
@@ -70,19 +71,14 @@ async def main() -> int:
                     if competition.name != COMPETITION_NAME or competition.slug != COMPETITION_SLUG or competition.country != COMPETITION_COUNTRY:
                         raise RegistrationError("existing competition conflicts with intended La Liga registration")
 
-                if ext is None:
-                    ext = ExternalId(
-                        entity_type="competition",
-                        provider=PROVIDER,
-                        external_id=EXTERNAL_ID,
-                        competition_id=competition.id,
+                # Store the provider's own competition code, and refuse to add
+                # a second mapping for the same competition/provider.
+                try:
+                    await register_competition_mapping(
+                        session, PROVIDER, competition.id, EXTERNAL_ID
                     )
-                    session.add(ext)
-                else:
-                    if ext.competition_id is None:
-                        ext.competition_id = competition.id
-                    elif ext.competition_id != competition.id:
-                        raise RegistrationError("external-id mapping points to a different competition")
+                except ValueError as exc:
+                    raise RegistrationError(str(exc)) from exc
 
                 season_result = await session.execute(
                     select(Season).where(

@@ -132,6 +132,118 @@ async def upsert_external_id(
     return result
 
 
+# ─── Competition mapping registration ───────────────────────────────────
+
+
+def canonical_competition_external_id(provider: str, external_id: str | int) -> str:
+    """Canonical stored identifier for a provider's competition mapping.
+
+    Each provider keeps its own identifier format in ``external_ids``:
+
+    - ``api_football``: numeric league id (``"39"``)
+    - ``football_data``: competition code (``"PL"``)
+
+    Values in another provider's format are rejected, so the two id spaces can
+    never be stored as if they were interchangeable.
+    """
+    if provider == "football_data":
+        from providers.football_data.ids import canonical_competition_code
+
+        return canonical_competition_code(external_id)
+
+    if provider == "api_football":
+        from providers.api_football.ids import canonical_league_id
+
+        return canonical_league_id(external_id)
+
+    raise ValueError(f"Unsupported provider for competition mappings: {provider}")
+
+
+async def register_competition_mapping(
+    session: AsyncSession,
+    provider: str,
+    competition_id: int,
+    external_id: str | int,
+) -> tuple[Any, bool]:
+    """Create or verify a provider competition mapping in ``external_ids``.
+
+    The internal ``competitions.id`` is only ever stored in
+    ``external_ids.competition_id``; ``external_id`` always holds the
+    provider's own identifier (numeric league id or competition code).
+
+    The mapping is idempotent and never silently replaces a valid mapping:
+
+    - the same provider id already mapped to a different competition → error
+    - the competition already mapped to a different id for this provider →
+      error (a second row would make fixture resolution ambiguous)
+    - the exact mapping already exists → returned unchanged
+    - one matching row exists with no competition link → it is bound
+
+    Returns:
+        (ExternalId instance, created)
+    """
+    from db.models.external_id import ExternalId
+
+    canonical = canonical_competition_external_id(provider, external_id)
+
+    same_external_result = await session.execute(
+        select(ExternalId).where(
+            ExternalId.entity_type == "competition",
+            ExternalId.provider == provider,
+            ExternalId.external_id == canonical,
+        )
+    )
+    same_external = list(same_external_result.scalars().all())
+
+    for row in same_external:
+        if row.competition_id is None:
+            continue
+        if row.competition_id != competition_id:
+            raise ValueError(
+                f"Conflicting {provider} competition mapping {canonical!r}: "
+                f"already mapped to internal competition {row.competition_id}, "
+                f"not {competition_id}"
+            )
+
+    same_competition_result = await session.execute(
+        select(ExternalId).where(
+            ExternalId.entity_type == "competition",
+            ExternalId.provider == provider,
+            ExternalId.competition_id == competition_id,
+        )
+    )
+    stored_ids = {
+        str(row.external_id)
+        for row in same_competition_result.scalars().all()
+        if row.external_id is not None and str(row.external_id).strip()
+    }
+    conflicting = sorted(stored_ids - {canonical})
+    if conflicting:
+        raise ValueError(
+            f"Competition {competition_id} already has {provider} competition "
+            f"mapping(s) {conflicting}; refusing to add {canonical!r}. "
+            "Correct the existing row instead of adding a second mapping."
+        )
+
+    for row in same_external:
+        if row.competition_id == competition_id:
+            return row, False
+        # Existing row for this provider id with no competition link yet.
+        row.competition_id = competition_id
+        await session.flush()
+        return row, False
+
+    mapping = ExternalId(
+        entity_type="competition",
+        provider=provider,
+        external_id=canonical,
+        competition_id=competition_id,
+    )
+    session.add(mapping)
+    await session.flush()
+    return mapping, True
+
+
 # ─── Type-safe wrappers ─────────────────────────────────────────────────
 
 

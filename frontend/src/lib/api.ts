@@ -72,6 +72,12 @@ export function getLeague(leagueId: number): Promise<LeagueProfile> {
   return apiFetch(`/api/v1/leagues/${leagueId}`);
 }
 
+// ─── Competition endpoints ────────────────────────────────────────────
+
+export function getCompetition(competitionId: number): Promise<LeagueProfile> {
+  return apiFetch(`/api/v1/competitions/${competitionId}`);
+}
+
 // ─── Standings endpoints (database-backed) ─────────────────────────────
 export function getStandingsBySeason(seasonId: number): Promise<{
   season: string;

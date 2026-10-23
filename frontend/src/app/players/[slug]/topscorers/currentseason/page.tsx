@@ -1,24 +1,14 @@
-import type { Metadata } from "next";
-import TopScorersView, { topScorersMetadata } from "@/components/TopScorersView";
-import { isTopScorerCompetition } from "@/lib/constants";
+import { redirect } from "next/navigation";
+import { TOP_SCORER_COMPETITIONS, type TopScorerCompetitionKey } from "@/lib/constants";
 
-// The golden boot race changes with every matchweek — never bake a snapshot in.
-export const dynamic = "force-dynamic";
-
-type Props = {
+export default async function TopScorersRedirect({
+  params,
+}: {
   params: Promise<{ slug: string }>;
-};
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+}) {
   const { slug } = await params;
-  if (!isTopScorerCompetition(slug)) return { title: "Top Scorers" };
-  return topScorersMetadata(slug);
-}
-
-export default async function CompetitionTopScorersPage({ params }: Props) {
-  const { slug } = await params;
-  if (!isTopScorerCompetition(slug)) {
-    return <main className="p-8">Unsupported competition.</main>;
-  }
-  return <TopScorersView competition={slug} />;
+  const key = slug as TopScorerCompetitionKey;
+  const entry = TOP_SCORER_COMPETITIONS[key];
+  if (!entry) redirect("/competitions/epl-39/top-scorers/current-season");
+  redirect(`/competitions/${key}-${entry.providerId}/top-scorers/current-season`);
 }

@@ -18,7 +18,6 @@ import {
   getMatchesByDate,
 } from "@/lib/api";
 import { HOMEPAGE_REFRESH_INTERVAL } from "@/lib/constants";
-import { MOCK_STANDINGS, MOCK_TOP_SCORERS } from "@/lib/mock-data";
 import type { LeagueSummary, LiveTopScorer, MatchStatus, MatchSummary } from "@/lib/types";
 
 /*
@@ -499,8 +498,8 @@ function SiteHeader({ searchRef }: { searchRef: RefObject<HTMLInputElement | nul
     { label: "Live", href: "/", active: true },
     { label: "Fixtures", href: "/", active: false },
     { label: "Results", href: "/", active: false },
-    { label: "Standings", href: "/standings", active: false },
-    { label: "Players", href: "/players/epl/topscorers/currentseason", active: false },
+    { label: "Standings", href: "/competitions/epl-39/standings/current-season", active: false },
+    { label: "Players", href: "/competitions/epl-39/top-scorers/current-season", active: false },
   ];
 
   return (
@@ -724,10 +723,10 @@ function LeagueCard({ matches }: { matches: MatchSummary[] }) {
             ) : null}
           </div>
         </div>
-        <Link
-          href={`/leagues/${league.slug}`}
-          className="text-[11px] font-medium text-zinc-500 hover:text-black flex items-center space-x-1 transition-colors"
-        >
+          <Link
+            href={`/competitions/${league.slug}`}
+            className="text-[11px] font-medium text-zinc-500 hover:text-black flex items-center space-x-1 transition-colors"
+          >
           <span>View all</span>
           <svg
             className="w-3 h-3"
@@ -754,12 +753,47 @@ function StandingsCard({
   season,
   matchday,
   rows,
+  loading,
 }: {
   leagueName: string;
   season: string;
   matchday: number | null;
   rows: StandingView[];
+  loading: boolean;
 }) {
+  if (loading) {
+    return (
+      <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-tight text-black">{leagueName}</h3>
+            <p className="text-[11px] text-zinc-500">Standings {season}</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="flex items-center space-x-1 text-[10px] text-zinc-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              <span className="hidden sm:inline">UCL</span>
+            </span>
+          </div>
+        </div>
+        <div className="p-3 space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 animate-pulse"
+            >
+              <span className="w-2 h-2 rounded-full bg-zinc-200" />
+              <div className="flex-1 space-y-1">
+                <div className="h-3 bg-zinc-200 rounded w-3/4" />
+                <div className="h-3 bg-zinc-200 rounded w-1/2" />
+              </div>
+              <div className="h-4 bg-zinc-200 rounded w-16 text-center" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
       <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-200 flex items-center justify-between">
@@ -885,7 +919,7 @@ function StandingsCard({
 
       <div className="p-2 border-t border-zinc-100 bg-zinc-50/50">
         <Link
-          href="/standings"
+          href="/competitions/epl-39/standings/current-season"
           className="w-full py-1.5 px-3 rounded-[4px] text-center block text-xs font-semibold text-zinc-800 hover:text-black hover:bg-zinc-100 border border-zinc-200 transition-colors"
         >
           Full Standings &amp; Form Table →
@@ -899,11 +933,48 @@ function TopScorersCard({
   leagueName,
   season,
   rows,
+  loading,
 }: {
   leagueName: string;
   season: string;
   rows: ScorerView[];
+  loading: boolean;
 }) {
+  if (loading) {
+    return (
+      <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-tight text-black">Top Scorers</h3>
+            <p className="text-[11px] text-zinc-500">
+              {leagueName} {season}
+            </p>
+          </div>
+          <div className="flex items-center space-x-3 text-[10px] font-mono text-zinc-400">
+            <span>AST</span>
+            <span>NPG</span>
+            <span className="text-black font-bold">G</span>
+          </div>
+        </div>
+        <div className="p-3 space-y-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex items-center gap-2.5 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-zinc-200" />
+              <div className="flex-1 space-y-1">
+                <div className="h-3 bg-zinc-200 rounded w-3/4" />
+                <div className="h-3 bg-zinc-200 rounded w-1/3" />
+              </div>
+              <div className="text-right w-16">
+                <div className="h-3 bg-zinc-200 rounded w-20" />
+                <div className="h-3 bg-zinc-200 rounded w-16" />
+                <div className="h-3 bg-zinc-200 rounded w-12" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
       <div className="px-4 py-3 bg-zinc-50/80 border-b border-zinc-200 flex items-center justify-between">
@@ -988,7 +1059,7 @@ function TopScorersCard({
 
       <div className="p-2 border-t border-zinc-100 bg-zinc-50/50">
         <Link
-          href="/players/epl/topscorers/currentseason"
+          href="/competitions/epl-39/top-scorers/current-season"
           className="w-full py-1.5 px-3 rounded-[4px] text-center block text-xs font-semibold text-zinc-800 hover:text-black hover:bg-zinc-100 border border-zinc-200 transition-colors"
         >
           Full Golden Boot Race →
@@ -1012,6 +1083,8 @@ export default function Dashboard() {
   const [standingsSeason, setStandingsSeason] = useState("");
   const [liveScorers, setLiveScorers] = useState<LiveTopScorer[]>([]);
   const [scorersSeason, setScorersSeason] = useState("");
+  const [standingsLoading, setStandingsLoading] = useState(true);
+  const [scorersLoading, setScorersLoading] = useState(true);
   const [competitionName, setCompetitionName] = useState("Premier League");
   const [currentMatchday, setCurrentMatchday] = useState<number | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -1046,17 +1119,21 @@ export default function Dashboard() {
     let cancelled = false;
 
     const loadStandings = async () => {
+      setStandingsLoading(true);
       try {
         const data = await getLiveStandings();
         if (cancelled) return;
         setStandingsRaw(data.rows ?? []);
         setStandingsSeason(data.season ?? "");
       } catch {
-        // Mock standings remain the fallback.
+        // Live standings unavailable; leave rows empty.
+      } finally {
+        setStandingsLoading(false);
       }
     };
 
     const loadScorers = async () => {
+      setScorersLoading(true);
       try {
         const data = await getLiveTopScorers();
         if (cancelled) return;
@@ -1065,7 +1142,9 @@ export default function Dashboard() {
         setCompetitionName(data.competition_name ?? "Premier League");
         setCurrentMatchday(data.current_matchday ?? null);
       } catch {
-        // Mock top scorers remain the fallback.
+        // Live scorers unavailable; leave rows empty.
+      } finally {
+        setScorersLoading(false);
       }
     };
 
@@ -1155,10 +1234,7 @@ export default function Dashboard() {
     );
   }, [matches]);
 
-  const standings = useMemo(
-    () => buildStandings(standingsRaw.length > 0 ? standingsRaw : MOCK_STANDINGS),
-    [standingsRaw],
-  );
+  const standings = useMemo(() => buildStandings(standingsRaw), [standingsRaw]);
 
   const standingsMatchday = useMemo(() => {
     if (currentMatchday !== null) return currentMatchday;
@@ -1166,15 +1242,7 @@ export default function Dashboard() {
     return standingsRaw.reduce((max, row) => Math.max(max, Number(row.played ?? 0)), 0) || null;
   }, [currentMatchday, standingsRaw]);
 
-  const scorers = useMemo(
-    () =>
-      buildScorers(
-        liveScorers.length > 0
-          ? liveScorers
-          : (MOCK_TOP_SCORERS as unknown as LiveTopScorer[]),
-      ),
-    [liveScorers],
-  );
+  const scorers = useMemo(() => buildScorers(liveScorers), [liveScorers]);
 
   const leagueName = competitionName || "Premier League";
   const seasonLabel = standingsSeason || "Current Season";
@@ -1265,7 +1333,7 @@ export default function Dashboard() {
             <span>All Matches</span>
           </Link>
           <Link
-            href="/leagues/premier-league-1"
+            href="/competitions/premier-league-39"
             className="px-3 py-1.5 rounded-full bg-white text-zinc-700 hover:text-black hover:bg-zinc-100 border border-zinc-200 font-medium flex items-center space-x-2 shrink-0 transition"
           >
             <span
@@ -1277,7 +1345,7 @@ export default function Dashboard() {
             <span>Premier League</span>
           </Link>
           <Link
-            href="/leagues/la-liga-2"
+            href="/competitions/la-liga-140"
             className="px-3 py-1.5 rounded-full bg-white text-zinc-700 hover:text-black hover:bg-zinc-100 border border-zinc-200 font-medium flex items-center space-x-2 shrink-0 transition"
           >
             <span
@@ -1289,7 +1357,7 @@ export default function Dashboard() {
             <span>La Liga</span>
           </Link>
           <Link
-            href="/leagues/champions-league-3"
+            href="/competitions/champions-league-2"
             className="px-3 py-1.5 rounded-full bg-white text-zinc-700 hover:text-black hover:bg-zinc-100 border border-zinc-200 font-medium flex items-center space-x-2 shrink-0 transition"
           >
             <span
@@ -1301,7 +1369,7 @@ export default function Dashboard() {
             <span>Champions League</span>
           </Link>
           <Link
-            href="/players/epl/topscorers/currentseason"
+            href="/competitions/epl-39/top-scorers/current-season"
             className="px-3 py-1.5 rounded-full bg-white text-zinc-700 hover:text-black hover:bg-zinc-100 border border-zinc-200 font-medium flex items-center space-x-2 shrink-0 transition"
           >
             <span className="w-4 h-4 rounded-full bg-zinc-200 text-zinc-800 text-[9px] font-bold flex items-center justify-center">
@@ -1343,11 +1411,13 @@ export default function Dashboard() {
               season={seasonLabel}
               matchday={standingsMatchday}
               rows={standings}
+              loading={standingsLoading}
             />
             <TopScorersCard
               leagueName={leagueName}
               season={scorerSeasonLabel || "Current Season"}
               rows={scorers}
+              loading={scorersLoading}
             />
           </aside>
         </div>

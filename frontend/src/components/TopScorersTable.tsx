@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import TeamCrest from "@/components/TeamCrest";
+import { buildSlug } from "@/lib/slug";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MatchSummary } from "@/lib/types";
 
@@ -53,6 +54,7 @@ type PositionGroup = "offence" | "midfield" | "defence";
 type ScorerRow = {
   id: string;
   rank: number;
+  slug: string;
   name: string;
   initials: string;
   club: string;
@@ -382,6 +384,7 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
     rows.push({
       id: `${scorer.player?.id ?? name}-${index}`,
       rank: 0,
+      slug: buildSlug(name, scorer.player?.id ?? index),
       name,
       initials: initials(name),
       club: scorer.team?.name?.trim() || "Unknown club",
@@ -848,7 +851,7 @@ export default function TopScorersTable({
               chevron_right
             </span>
             <Link
-              href={`/leagues/${competition}-${competitionProviderId}`}
+              href={`/competitions/${competition}-${competitionProviderId}`}
               className="transition-colors hover:text-primary"
             >
               {competitionName}
@@ -860,7 +863,7 @@ export default function TopScorersTable({
               chevron_right
             </span>
             <Link
-              href={`/players/${competition}/topscorers/currentseason`}
+              href={`/competitions/${competition}-${competitionProviderId}/top-scorers/current-season`}
               className="transition-colors hover:text-primary"
             >
               Player Stats
@@ -1012,7 +1015,9 @@ export default function TopScorersTable({
                     </div>
                     <div className="flex flex-col justify-center">
                       <h2 className="font-headline-xl text-headline-xl uppercase tracking-tight text-on-primary">
-                        {leader.name}
+                        <Link href={`/players/${leader.slug}`} className="text-on-primary hover:underline">
+                          {leader.name}
+                        </Link>
                       </h2>
                       <div className="flex flex-wrap items-center gap-space-xs font-label-lg text-label-lg uppercase text-on-primary-container">
                         <span>
@@ -1144,7 +1149,9 @@ export default function TopScorersTable({
                     </div>
                     <div className="min-w-0">
                       <h2 className="truncate text-[17px]/[21px] font-extrabold tracking-tight text-accent-dark uppercase">
-                        {player.name}
+                        <Link href={`/players/${player.slug}`} className="hover:underline">
+                          {player.name}
+                        </Link>
                       </h2>
                     </div>
                   </div>
@@ -1458,9 +1465,12 @@ export default function TopScorersTable({
                           {row.initials}
                         </div>
                         <div className="flex flex-col justify-center">
-                          <span className="whitespace-nowrap font-body-sm text-body-sm font-bold tracking-tight text-primary">
+                          <Link
+                            href={`/players/${row.slug}`}
+                            className="whitespace-nowrap font-body-sm text-body-sm font-bold tracking-tight text-primary hover:underline"
+                          >
                             {row.name}
-                          </span>
+                          </Link>
                           <div className="hidden items-center gap-1 font-label-sm text-label-sm uppercase text-secondary group-hover:flex">
                             <span>{row.nationCode}</span>
                             <span aria-hidden="true">•</span>

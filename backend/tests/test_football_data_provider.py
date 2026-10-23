@@ -123,3 +123,28 @@ class TestFootballDataProviderClient:
         p = FootballDataProvider()
         result = await p.search_team("Arsenal")
         assert isinstance(result, list)
+
+
+class TestCompetitionCodeReferences:
+    """The client accepts the provider's own competition codes (offline)."""
+
+    @pytest.mark.asyncio
+    async def test_get_fixtures_accepts_competition_code(self):
+        p = FootballDataProvider()
+        with patch(
+            "providers.football_data.client._get",
+            new=AsyncMock(return_value={"matches": []}),
+        ) as mock_get:
+            result = await p.get_fixtures(league_id="PL", season=2026)
+
+        assert result == []
+        mock_get.assert_awaited_once_with("/competitions/PL/matches", {"season": 2026})
+
+    @pytest.mark.asyncio
+    async def test_get_fixtures_rejects_unknown_code(self):
+        p = FootballDataProvider()
+        with patch("providers.football_data.client._get", new=AsyncMock()) as mock_get:
+            result = await p.get_fixtures(league_id="ZZ", season=2026)
+
+        assert result == []
+        mock_get.assert_not_awaited()

@@ -102,7 +102,17 @@ async def _get(endpoint: str, params: dict[str, Any] | None = None) -> dict:
     return data
 
 
-def _comp_code(competition_id: int) -> str | None:
+def _comp_code(competition_id: int | str) -> str | None:
+    """Competition code for a numeric key or a football-data.org code.
+
+    Accepts both the numeric key used by ``COMPETITION_CODE_MAP`` and the
+    provider's own competition code (for example ``"PL"``), so callers that
+    store football-data.org codes in ``external_ids`` do not have to translate
+    them through another provider's id space.
+    """
+    if isinstance(competition_id, str):
+        code = competition_id.strip().upper()
+        return code if code in CODE_TO_COMPETITION_ID else None
     return COMPETITION_CODE_MAP.get(competition_id)
 
 
@@ -152,7 +162,7 @@ class FootballDataProvider(Provider):
 
     async def get_fixtures(
         self,
-        league_id: int | None = None,
+        league_id: int | str | None = None,
         season: int | None = None,
         date: str | None = None,
         team_id: int | None = None,

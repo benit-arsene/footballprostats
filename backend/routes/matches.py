@@ -122,7 +122,7 @@ async def get_match_detail(match_id: int):
     scores, status, lineups, and current stats.
     """
     try:
-        fixture = await football_api.get_fixture(match_id)
+        fixture = await football_api.get_fixture(match_id, season=get_season_year())
         if not fixture:
             raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}})
         return map_match_detail(fixture)
@@ -141,7 +141,7 @@ async def get_match_events(match_id: int):
     Returns the match detail with the full events array ordered by minute.
     """
     try:
-        fixture = await football_api.get_fixture(match_id)
+        fixture = await football_api.get_fixture(match_id, season=get_season_year())
         if not fixture:
             raise HTTPException(status_code=404, detail={"error": {"code": "NOT_FOUND", "message": f"Match {match_id} not found"}})
         return map_match_detail(fixture)

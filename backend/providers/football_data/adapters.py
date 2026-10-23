@@ -8,6 +8,7 @@ from models import (
     TeamSummary,
     PlayerSummary,
     MatchSummary,
+    MatchDetail,
     MatchStatus,
     StandingRow,
 )
@@ -157,6 +158,33 @@ class FootballDataAdapters:
             away_team=away_team,
             home_score=full_time.get("home") or 0,
             away_score=full_time.get("away") or 0,
+        )
+
+    @staticmethod
+    def match_detail(api_match: dict) -> MatchDetail:
+        """Normalize a single football-data.org match into a canonical MatchDetail.
+
+        The free tier does not include events, lineups, or statistics, so those
+        fields are empty lists / None.
+        """
+        from models import MatchDetail
+
+        summary = FootballDataAdapters.match_summary(api_match)
+
+        referees = api_match.get("referees", []) or []
+        referee = ""
+        if referees:
+            main_ref = next((r for r in referees if r.get("role") == "REFEREE"), referees[0])
+            referee = main_ref.get("name", "") if main_ref else ""
+
+        return MatchDetail(
+            **summary.model_dump(),
+            attendance=None,
+            referee=referee,
+            home_lineup=[],
+            away_lineup=[],
+            events=[],
+            stats=None,
         )
 
     @staticmethod

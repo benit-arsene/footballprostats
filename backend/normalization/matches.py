@@ -48,7 +48,15 @@ def normalize_match_summary(data: dict) -> MatchSummary:
 
 
 def normalize_match_detail(data: dict) -> MatchDetail:
-    """Normalize a fixture dict into a canonical MatchDetail."""
+    """Normalize a fixture dict into a canonical MatchDetail.
+
+    Accepts API-Football fixture format and the football-data.org v4 match
+    format. Both converge to the same output.
+    """
+    if _is_football_data_match(data):
+        from providers.football_data.adapters import FootballDataAdapters
+        return FootballDataAdapters.match_detail(data)
+
     from providers.api_football.adapters import ApiFootballAdapters
     return ApiFootballAdapters.match_detail(data)
 

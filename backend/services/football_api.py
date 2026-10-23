@@ -33,8 +33,16 @@ def _provider_for(entity_type: str, season: int | None = None, data_type: str | 
         return _api_football
 
 
-async def get_fixture(fixture_id: int) -> dict | None:
-    return await _api_football.get_fixture(fixture_id)
+async def get_fixture(fixture_id: int, season: int | None = None) -> dict | None:
+    """Fetch a single fixture, routed to the same provider that supplied the fixture list.
+
+    Uses provider routing (like get_live_fixtures / get_fixtures_by_date) so that
+    a football-data.org match ID is queried against football-data.org, not
+    API-Football. Without routing, a football-data.org ID passed to API-Football
+    resolves to an entirely different match.
+    """
+    p = _provider_for("match", season=season, data_type="fixtures")
+    return await p.get_fixture(fixture_id)
 
 
 async def get_live_fixtures(league_id: int | None = None, season: int | None = None) -> list[dict]:

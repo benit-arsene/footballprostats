@@ -34,6 +34,8 @@ type Props = {
   scorers: ScorerInput[];
   /** Display name of the competition the rows belong to, e.g. "Premier League". */
   competitionName: string;
+  /** Competition slug used to build the Player Stats route, e.g. "epl" or "laliga". */
+  competition: string;
   /** Provider competition id that the matchday highlights are filtered by. */
   competitionProviderId: number;
   season?: string | null;
@@ -180,7 +182,14 @@ function key(value: string): string {
 function nationCode(nationality?: string | null): string {
   if (!nationality) return DASH;
   const cleaned = nationality.trim();
-  return NATION_CODES[key(cleaned)] ?? (cleaned.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase() || DASH);
+  return (
+    NATION_CODES[key(cleaned)] ??
+    (cleaned
+      .replace(/[^a-zA-Z]/g, "")
+      .slice(0, 3)
+      .toUpperCase() ||
+      DASH)
+  );
 }
 
 function initials(name: string): string {
@@ -232,7 +241,11 @@ function clubCode(team?: ScorerInput["team"]): string {
   }
 
   const shortName = team?.short_name?.trim();
-  if (shortName) return shortName.replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase();
+  if (shortName)
+    return shortName
+      .replace(/[^a-zA-Z]/g, "")
+      .slice(0, 3)
+      .toUpperCase();
 
   const letters = name
     .replace(/\b(fc|afc|cf|sc|club|the)\b/gi, "")
@@ -322,7 +335,8 @@ function positionOf(player?: ScorerInput["player"]): {
     return {
       label: position,
       code,
-      group: groupFromText(position) ?? (section ? groupFromSection(section) : null),
+      group:
+        groupFromText(position) ?? (section ? groupFromSection(section) : null),
     };
   }
 
@@ -359,9 +373,11 @@ function buildRows(scorers: ScorerInput[]): ScorerRow[] {
     // football-data.org only publishes assists and penalties for players who
     // have them, so a missing value means none — it is read as zero here.
     const assists = typeof scorer.assists === "number" ? scorer.assists : 0;
-    const penalties = typeof scorer.penalties === "number" ? scorer.penalties : 0;
+    const penalties =
+      typeof scorer.penalties === "number" ? scorer.penalties : 0;
     const goals = scorer.goals ?? 0;
-    const apps = typeof scorer.played_matches === "number" ? scorer.played_matches : null;
+    const apps =
+      typeof scorer.played_matches === "number" ? scorer.played_matches : null;
 
     rows.push({
       id: `${scorer.player?.id ?? name}-${index}`,
@@ -416,7 +432,12 @@ const COLUMNS: Array<{
   padding: string;
   headExtra?: string;
 }> = [
-  { key: "apps", label: "Apps", minWidth: "min-w-[70px]", padding: "px-space-sm" },
+  {
+    key: "apps",
+    label: "Apps",
+    minWidth: "min-w-[70px]",
+    padding: "px-space-sm",
+  },
   {
     key: "goals",
     label: "Goals",
@@ -424,10 +445,25 @@ const COLUMNS: Array<{
     padding: "px-space-md",
     headExtra: "bg-surface-container font-extrabold text-primary",
   },
-  { key: "assists", label: "Ast", minWidth: "min-w-[60px]", padding: "px-space-sm" },
+  {
+    key: "assists",
+    label: "Ast",
+    minWidth: "min-w-[60px]",
+    padding: "px-space-sm",
+  },
   { key: "ga", label: "G+A", minWidth: "min-w-[60px]", padding: "px-space-sm" },
-  { key: "penalties", label: "Pen", minWidth: "min-w-[60px]", padding: "px-space-sm" },
-  { key: "goalsPerApp", label: "Goals / App", minWidth: "min-w-[105px]", padding: "px-space-md" },
+  {
+    key: "penalties",
+    label: "Pen",
+    minWidth: "min-w-[60px]",
+    padding: "px-space-sm",
+  },
+  {
+    key: "goalsPerApp",
+    label: "Goals / App",
+    minWidth: "min-w-[105px]",
+    padding: "px-space-md",
+  },
 ];
 
 const ALL_COLUMNS_VISIBLE: Record<ColumnKey, boolean> = {
@@ -470,10 +506,14 @@ function sortValue(row: ScorerRow, sortKey: SortKey): number | string | null {
   }
 }
 
-function pageWindow(current: number, total: number): Array<number | "ellipsis"> {
+function pageWindow(
+  current: number,
+  total: number,
+): Array<number | "ellipsis"> {
   if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
   if (current <= 4) return [1, 2, 3, 4, 5, "ellipsis", total];
-  if (current >= total - 3) return [1, "ellipsis", total - 4, total - 3, total - 2, total - 1, total];
+  if (current >= total - 3)
+    return [1, "ellipsis", total - 4, total - 3, total - 2, total - 1, total];
   return [1, "ellipsis", current - 1, current, current + 1, "ellipsis", total];
 }
 
@@ -497,12 +537,19 @@ function SortHeader({
       type="button"
       onClick={onClick}
       className={`flex w-full cursor-pointer items-center gap-1 uppercase transition-colors ${
-        align === "end" ? "justify-end" : align === "center" ? "justify-center" : ""
+        align === "end"
+          ? "justify-end"
+          : align === "center"
+            ? "justify-center"
+            : ""
       } ${active ? "text-primary" : "hover:text-primary"}`}
     >
       <span>{label}</span>
       {icon ? (
-        <span className="material-symbols-outlined text-[13px]" aria-hidden="true">
+        <span
+          className="material-symbols-outlined text-[13px]"
+          aria-hidden="true"
+        >
           {icon}
         </span>
       ) : null}
@@ -525,9 +572,13 @@ function SpotlightMetric({
         {label}
       </span>
       <div className="mt-0.5 flex items-baseline gap-1">
-        <span className="font-stat-display text-headline-md text-on-primary">{value}</span>
+        <span className="font-stat-display text-headline-md text-on-primary">
+          {value}
+        </span>
       </div>
-      <span className="font-body-sm text-body-sm text-on-primary-container">{note}</span>
+      <span className="font-body-sm text-body-sm text-on-primary-container">
+        {note}
+      </span>
     </div>
   );
 }
@@ -537,6 +588,7 @@ function SpotlightMetric({
 export default function TopScorersTable({
   scorers,
   competitionName,
+  competition,
   competitionProviderId,
   season,
   currentMatchday = null,
@@ -552,11 +604,16 @@ export default function TopScorersTable({
   const [nation, setNation] = useState("");
   const [positionGroup, setPositionGroup] = useState<"" | PositionGroup>("");
   const [minApps, setMinApps] = useState(0);
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "goals", dir: "desc" });
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
+    key: "goals",
+    dir: "desc",
+  });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
+  const [visibleColumns, setVisibleColumns] = useState<
+    Record<ColumnKey, boolean>
+  >({
     ...DEFAULT_COLUMNS_VISIBLE,
   });
   const [columnsOpen, setColumnsOpen] = useState(false);
@@ -565,7 +622,8 @@ export default function TopScorersTable({
   useEffect(() => {
     if (!columnsOpen) return;
     function onPointerDown(event: MouseEvent) {
-      if (!columnsRef.current?.contains(event.target as Node)) setColumnsOpen(false);
+      if (!columnsRef.current?.contains(event.target as Node))
+        setColumnsOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setColumnsOpen(false);
@@ -579,7 +637,10 @@ export default function TopScorersTable({
   }, [columnsOpen]);
 
   const clubs = useMemo(
-    () => Array.from(new Set(rows.map((row) => row.club))).sort((a, b) => a.localeCompare(b)),
+    () =>
+      Array.from(new Set(rows.map((row) => row.club))).sort((a, b) =>
+        a.localeCompare(b),
+      ),
     [rows],
   );
 
@@ -606,7 +667,8 @@ export default function TopScorersTable({
       if (positionGroup && row.positionGroup !== positionGroup) return false;
       if (minApps > 0 && (row.apps ?? 0) < minApps) return false;
       if (needle) {
-        const haystack = `${row.name} ${row.club} ${row.nation} ${row.position}`.toLowerCase();
+        const haystack =
+          `${row.name} ${row.club} ${row.nation} ${row.position}`.toLowerCase();
         if (!haystack.includes(needle)) return false;
       }
       return true;
@@ -627,8 +689,11 @@ export default function TopScorersTable({
       if (left === null) return 1;
       if (right === null) return -1;
       const comparison =
-        typeof left === "string" ? left.localeCompare(right as string) : left - (right as number);
-      if (comparison !== 0) return sort.dir === "asc" ? comparison : -comparison;
+        typeof left === "string"
+          ? left.localeCompare(right as string)
+          : left - (right as number);
+      if (comparison !== 0)
+        return sort.dir === "asc" ? comparison : -comparison;
       return tiebreak(a, b);
     });
   }, [filtered, sort]);
@@ -640,7 +705,9 @@ export default function TopScorersTable({
   const rangeStart = sorted.length === 0 ? 0 : startIndex + 1;
   const rangeEnd = Math.min(startIndex + pageSize, sorted.length);
 
-  const visibleColumnList = COLUMNS.filter((column) => visibleColumns[column.key]);
+  const visibleColumnList = COLUMNS.filter(
+    (column) => visibleColumns[column.key],
+  );
   const columnCount = 3 + visibleColumnList.length;
   const columnSpan = columnCount;
 
@@ -656,7 +723,8 @@ export default function TopScorersTable({
     const parts: string[] = [];
     if (goalsTotal !== null) parts.push(`${goalsTotal} goals recorded`);
     if (scorersCount !== null) parts.push(`across ${scorersCount} scorers`);
-    if (currentMatchday !== null) parts.push(`through matchday ${currentMatchday}`);
+    if (currentMatchday !== null)
+      parts.push(`through matchday ${currentMatchday}`);
     if (parts.length === 0) return "Awaiting the first matchday of the season.";
     return `${parts.join(" ")}.`;
   })();
@@ -710,7 +778,8 @@ export default function TopScorersTable({
   }
 
   function sortIcon(sortKey: SortKey): string | null {
-    if (sort.key === sortKey) return sort.dir === "desc" ? "arrow_downward" : "arrow_upward";
+    if (sort.key === sortKey)
+      return sort.dir === "desc" ? "arrow_downward" : "arrow_upward";
     if (sortKey === "player" || sortKey === "club") return "unfold_more";
     return null;
   }
@@ -727,7 +796,10 @@ export default function TopScorersTable({
         <div className="mx-auto flex max-w-[1600px] items-center justify-between px-margin-desktop md:px-margin-wide">
           <div className="flex items-center gap-space-lg overflow-x-auto py-1 text-nowrap">
             <span className="flex items-center gap-1 font-label-sm text-label-sm uppercase tracking-widest text-secondary">
-              <span className="material-symbols-outlined text-[13px] text-primary" aria-hidden="true">
+              <span
+                className="material-symbols-outlined text-[13px] text-primary"
+                aria-hidden="true"
+              >
                 schedule
               </span>
               Matchday Highlights
@@ -743,7 +815,9 @@ export default function TopScorersTable({
                   <span className="font-label-sm text-label-sm font-bold uppercase text-primary">
                     {card.score}
                   </span>
-                  <span className="font-body-sm text-body-sm text-secondary">{card.detail}</span>
+                  <span className="font-body-sm text-body-sm text-secondary">
+                    {card.detail}
+                  </span>
                 </div>
               ))}
               {highlightCards.length === 0 ? (
@@ -757,9 +831,9 @@ export default function TopScorersTable({
       </section>
 
       {/* ─── Analytical canvas ─────────────────────────────────────── */}
-        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-space-lg px-margin-desktop py-space-lg md:px-margin-wide">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-space-md px-margin-desktop py-space-xs md:px-margin-wide">
         {/* Breadcrumb + feed status */}
-        <div className="flex flex-wrap items-center justify-between gap-space-sm">
+        <div className="flex flex-wrap items-center justify-between gap-space-xs">
           <nav
             aria-label="Breadcrumb"
             className="flex items-center gap-space-xs font-label-md text-label-md uppercase tracking-wider text-secondary"
@@ -767,22 +841,34 @@ export default function TopScorersTable({
             <Link href="/" className="transition-colors hover:text-primary">
               Home
             </Link>
-            <span className="material-symbols-outlined text-[13px] text-outline" aria-hidden="true">
-              chevron_right
-            </span>
-            <Link href="/standings" className="transition-colors hover:text-primary">
-              EPL
-            </Link>
-            <span className="material-symbols-outlined text-[13px] text-outline" aria-hidden="true">
+            <span
+              className="material-symbols-outlined text-[13px] text-outline"
+              aria-hidden="true"
+            >
               chevron_right
             </span>
             <Link
-              href="/players/epl/topscorers/currentseason"
+              href={`/leagues/${competition}-${competitionProviderId}`}
+              className="transition-colors hover:text-primary"
+            >
+              {competitionName}
+            </Link>
+            <span
+              className="material-symbols-outlined text-[13px] text-outline"
+              aria-hidden="true"
+            >
+              chevron_right
+            </span>
+            <Link
+              href={`/players/${competition}/topscorers/currentseason`}
               className="transition-colors hover:text-primary"
             >
               Player Stats
             </Link>
-            <span className="material-symbols-outlined text-[13px] text-outline" aria-hidden="true">
+            <span
+              className="material-symbols-outlined text-[13px] text-outline"
+              aria-hidden="true"
+            >
               chevron_right
             </span>
             <span className="font-bold text-primary">Current Season</span>
@@ -806,9 +892,9 @@ export default function TopScorersTable({
         </div>
 
         {/* Editorial header */}
-        <header className="flex flex-col justify-between gap-space-lg py-space-sm lg:flex-row lg:items-end mb-space-lg">
+        <header className="flex flex-col justify-between gap-space-xs py-0 lg:flex-row lg:items-end mb-space-xs">
           <div className="flex max-w-[768px] flex-col gap-space-xs">
-            <h1 className="font-headline-xl text-headline-xl uppercase tracking-tight text-primary">
+            <h1 className="font-headline-lg text-headline-lg uppercase tracking-tight text-primary">
               {competitionName} Top Scorers
             </h1>
           </div>
@@ -823,7 +909,10 @@ export default function TopScorersTable({
                 onClick={() => setColumnsOpen((open) => !open)}
                 className="flex h-8 items-center gap-1.5 rounded-chip bg-surface-container-lowest px-space-md font-label-md text-label-md uppercase tracking-wider text-primary shadow-sm transition-colors hover:bg-surface-container-low"
               >
-                <span className="material-symbols-outlined text-[15px]" aria-hidden="true">
+                <span
+                  className="material-symbols-outlined text-[15px]"
+                  aria-hidden="true"
+                >
                   tune
                 </span>
                 <span>Columns ({columnCount})</span>
@@ -840,7 +929,9 @@ export default function TopScorersTable({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setVisibleColumns({ ...ALL_COLUMNS_VISIBLE })}
+                      onClick={() =>
+                        setVisibleColumns({ ...ALL_COLUMNS_VISIBLE })
+                      }
                       className="font-label-sm text-label-sm font-bold uppercase text-primary transition-colors hover:text-secondary"
                     >
                       All
@@ -879,11 +970,13 @@ export default function TopScorersTable({
         </header>
 
         {/* ─── Podium / leaders spotlight ───────────────────────────── */}
-        <section className="grid grid-cols-1 gap-space-md md:grid-cols-12">
+        <section className="grid grid-cols-1 gap-1 md:grid-cols-12">
           {leader ? (
             <article className="relative flex flex-col justify-center overflow-hidden rounded-card bg-primary p-space-lg text-on-primary shadow-md md:col-span-12 lg:col-span-6">
               <div className="pointer-events-none absolute -right-10 -bottom-10 select-none opacity-10">
-                <span className="text-[240px] font-extrabold leading-none tracking-tighter">01</span>
+                <span className="text-[240px] font-extrabold leading-none tracking-tighter">
+                  01
+                </span>
               </div>
 
               <div className="relative z-10 flex flex-col gap-space-md justify-center h-full">
@@ -904,7 +997,10 @@ export default function TopScorersTable({
                   </div>
                   <div className="flex items-center gap-space-xs font-label-sm text-label-sm uppercase tracking-widest text-on-primary-container">
                     <span>{leader.club}</span>
-                    <span className="h-1.5 w-1.5 rounded-pill bg-surface-container-lowest" aria-hidden="true" />
+                    <span
+                      className="h-1.5 w-1.5 rounded-pill bg-surface-container-lowest"
+                      aria-hidden="true"
+                    />
                     <span>{leader.nationCode}</span>
                   </div>
                 </div>
@@ -921,10 +1017,16 @@ export default function TopScorersTable({
                       <div className="flex flex-wrap items-center gap-space-xs font-label-lg text-label-lg uppercase text-on-primary-container">
                         <span>
                           {leader.position}
-                          {leader.shirtNumber !== null ? ` (#${leader.shirtNumber})` : ""}
+                          {leader.shirtNumber !== null
+                            ? ` (#${leader.shirtNumber})`
+                            : ""}
                         </span>
                         <span aria-hidden="true">•</span>
-                        <span>{leader.apps !== null ? `${leader.apps} Apps` : `Apps ${DASH}`}</span>
+                        <span>
+                          {leader.apps !== null
+                            ? `${leader.apps} Apps`
+                            : `Apps ${DASH}`}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -952,7 +1054,9 @@ export default function TopScorersTable({
                 <SpotlightMetric
                   label="Appearances"
                   value={leader.apps === null ? DASH : leader.apps}
-                  note={leader.apps === null ? "Not reported" : "Matches played"}
+                  note={
+                    leader.apps === null ? "Not reported" : "Matches played"
+                  }
                 />
                 <SpotlightMetric
                   label="Assists"
@@ -966,14 +1070,25 @@ export default function TopScorersTable({
                 />
                 <SpotlightMetric
                   label="Goals / App"
-                  value={leader.goalsPerApp === null ? DASH : leader.goalsPerApp.toFixed(2)}
-                  note={leader.goalsPerApp === null ? "Needs appearances" : "Goals per appearance"}
+                  value={
+                    leader.goalsPerApp === null
+                      ? DASH
+                      : leader.goalsPerApp.toFixed(2)
+                  }
+                  note={
+                    leader.goalsPerApp === null
+                      ? "Needs appearances"
+                      : "Goals per appearance"
+                  }
                 />
               </div>
             </article>
           ) : (
             <article className="flex flex-col items-center justify-center gap-space-sm rounded-card bg-surface-container-lowest p-space-xl text-center shadow-sm md:col-span-12">
-              <span className="material-symbols-outlined text-[24px] text-secondary" aria-hidden="true">
+              <span
+                className="material-symbols-outlined text-[24px] text-secondary"
+                aria-hidden="true"
+              >
                 emoji_events
               </span>
               <p className="font-headline-md text-headline-md uppercase tracking-tight text-primary">
@@ -989,7 +1104,9 @@ export default function TopScorersTable({
             const isRunnerUp = index === 0;
             const nonPenGoals = player.goals - player.penalties;
             const goalsPerApp =
-              player.goalsPerApp === null ? DASH : player.goalsPerApp.toFixed(2);
+              player.goalsPerApp === null
+                ? DASH
+                : player.goalsPerApp.toFixed(2);
 
             return (
               <article
@@ -998,19 +1115,19 @@ export default function TopScorersTable({
               >
                 <div className="space-y-[10px] px-[13px] pt-[10px] pb-[16px] flex-grow-1 flex flex-col justify-between">
                   {/* Top metadata bar */}
-                    <div className="flex items-center justify-between gap-[6px] border-b border-zinc-100 pb-[7px]">
-                      <span className="inline-flex items-center rounded-[5px] bg-accent-dark px-[6px] py-[2px] text-[9px]/[12px] font-bold tracking-wider text-white">
-                        RANK {String(player.rank).padStart(2, "0")}
-                      </span>
-                      <span className="inline-flex min-w-0 items-center gap-[4px] rounded-[3px] border border-zinc-200/80 bg-zinc-50 px-[5px] py-[2px] text-[9px]/[12px] font-medium text-zinc-700">
-                        <TeamCrest
-                          url={player.clubCrest}
-                          alt={player.club}
-                          className="h-[11px] w-[11px] shrink-0 object-contain"
-                        />
-                        <span className="truncate">{player.club}</span>
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between gap-[6px] border-b border-zinc-100 pb-[7px]">
+                    <span className="inline-flex items-center rounded-[5px] bg-accent-dark px-[6px] py-[2px] text-[9px]/[12px] font-bold tracking-wider text-white">
+                      RANK {String(player.rank).padStart(2, "0")}
+                    </span>
+                    <span className="inline-flex min-w-0 items-center gap-[4px] rounded-[3px] border border-zinc-200/80 bg-zinc-50 px-[5px] py-[2px] text-[9px]/[12px] font-medium text-zinc-700">
+                      <TeamCrest
+                        url={player.clubCrest}
+                        alt={player.club}
+                        className="h-[11px] w-[11px] shrink-0 object-contain"
+                      />
+                      <span className="truncate">{player.club}</span>
+                    </span>
+                  </div>
 
                   {/* Player bio */}
                   <div className="flex items-center gap-[12px]">
@@ -1058,44 +1175,46 @@ export default function TopScorersTable({
                   </div>
 
                   {/* Tactical efficiency grid */}
-                    <div className="space-y-[6px]">
-                      <div className="flex items-center justify-between text-[9px]/[12px]">
-                        <span className="text-[9px]/[12px] font-bold uppercase tracking-wider text-muted-text">
-                          Efficiency
-                        </span>
-                        <span className="rounded-[3px] border border-zinc-200/60 bg-zinc-100 px-[6px] py-[1px] font-mono text-[9px]/[12px] font-bold text-zinc-700">
-                          Penalties: {player.penalties}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-[8px]">
-                        <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
-                          <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
-                            Apps
-                          </span>
-                          <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
-                            {player.apps === null ? DASH : player.apps}
-                          </span>
-                        </div>
-                        <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
-                          <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
-                            Goals / App
-                          </span>
-                          <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
-                            {goalsPerApp}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Card footer */}
-                    <div className="flex items-center justify-between border-t border-card-border bg-zinc-50/80 px-[13px] py-[6px]">
-                      <span className="font-medium text-zinc-600 text-[10px]/[13px]">
-                        Total Goal Involvement:{" "}
-                        <strong className="font-mono font-bold text-accent-dark text-[12px]/[14px]">{player.ga}</strong>
+                  <div className="space-y-[6px]">
+                    <div className="flex items-center justify-between text-[9px]/[12px]">
+                      <span className="text-[9px]/[12px] font-bold uppercase tracking-wider text-muted-text">
+                        Efficiency
+                      </span>
+                      <span className="rounded-[3px] border border-zinc-200/60 bg-zinc-100 px-[6px] py-[1px] font-mono text-[9px]/[12px] font-bold text-zinc-700">
+                        Penalties: {player.penalties}
                       </span>
                     </div>
+                    <div className="grid grid-cols-2 gap-[8px]">
+                      <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
+                        <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
+                          Apps
+                        </span>
+                        <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
+                          {player.apps === null ? DASH : player.apps}
+                        </span>
+                      </div>
+                      <div className="rounded-[6px] border border-zinc-100 bg-zinc-50/70 p-[6px] text-center">
+                        <span className="mb-[1px] block text-[8px]/[10px] font-medium uppercase text-muted-text">
+                          Goals / App
+                        </span>
+                        <span className="font-mono text-[12px]/[14px] font-bold tabular-nums text-accent-dark">
+                          {goalsPerApp}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </article>
+
+                  {/* Card footer */}
+                  <div className="flex items-center justify-between border-t border-card-border bg-zinc-50/80 px-[13px] py-[6px]">
+                    <span className="font-medium text-zinc-600 text-[10px]/[13px]">
+                      Goal Involvement:{" "}
+                      <strong className="font-mono font-bold text-accent-dark text-[12px]/[14px]">
+                        {player.ga}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+              </article>
             );
           })}
         </section>
@@ -1133,7 +1252,9 @@ export default function TopScorersTable({
                 }}
                 className="h-8 w-full cursor-pointer appearance-none rounded-chip bg-surface-container-low px-space-sm font-label-md text-label-md uppercase text-primary outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="">{clubs.length > 0 ? `All ${clubs.length} Clubs` : "All Clubs"}</option>
+                <option value="">
+                  {clubs.length > 0 ? `All ${clubs.length} Clubs` : "All Clubs"}
+                </option>
                 {clubs.map((name) => (
                   <option key={name} value={name}>
                     {name}
@@ -1211,7 +1332,9 @@ export default function TopScorersTable({
                 value={minApps}
                 onChange={(event) => {
                   const next = Number(event.target.value);
-                  setMinApps(Number.isFinite(next) ? Math.max(0, Math.floor(next)) : 0);
+                  setMinApps(
+                    Number.isFinite(next) ? Math.max(0, Math.floor(next)) : 0,
+                  );
                   setPage(1);
                 }}
                 className="w-10 bg-transparent text-right font-stat-tabular text-stat-tabular font-bold text-primary outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -1232,15 +1355,23 @@ export default function TopScorersTable({
           <div className="w-full overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <caption className="sr-only">
-                {competitionName} top scorers, season {seasonValue}. Sortable by player, club and every
-                performance column.
+                {competitionName} top scorers, season {seasonValue}. Sortable by
+                player, club and every performance column.
               </caption>
               <thead>
                 <tr className="h-10 select-none bg-surface-container-low font-label-md text-label-md uppercase tracking-wider text-secondary">
-                  <th scope="col" aria-sort="none" className="w-12 px-space-sm py-2 text-center font-bold">
+                  <th
+                    scope="col"
+                    aria-sort="none"
+                    className="w-12 px-space-sm py-2 text-center font-bold"
+                  >
                     #
                   </th>
-                  <th scope="col" aria-sort={retheme("player")} className="min-w-[200px] px-space-md py-2">
+                  <th
+                    scope="col"
+                    aria-sort={retheme("player")}
+                    className="min-w-[200px] px-space-md py-2"
+                  >
                     <SortHeader
                       label="Player"
                       icon={sortIcon("player")}
@@ -1249,7 +1380,11 @@ export default function TopScorersTable({
                       onClick={() => toggleSort("player")}
                     />
                   </th>
-                  <th scope="col" aria-sort={retheme("club")} className="min-w-[170px] px-space-md py-2">
+                  <th
+                    scope="col"
+                    aria-sort={retheme("club")}
+                    className="min-w-[170px] px-space-md py-2"
+                  >
                     <SortHeader
                       label="Club"
                       icon={sortIcon("club")}
@@ -1305,7 +1440,9 @@ export default function TopScorersTable({
                           {row.rank}
                         </span>
                       ) : (
-                        <span className="font-bold text-label-sm text-secondary">{row.rank}</span>
+                        <span className="font-bold text-label-sm text-secondary">
+                          {row.rank}
+                        </span>
                       )}
                     </td>
 
@@ -1337,7 +1474,11 @@ export default function TopScorersTable({
 
                     <td className="px-space-md">
                       <div className="flex items-center gap-1.5 font-body-sm text-body-sm text-primary">
-                        <TeamCrest url={row.clubCrest} alt={row.club} className="h-4 w-4 shrink-0 object-contain" />
+                        <TeamCrest
+                          url={row.clubCrest}
+                          alt={row.club}
+                          className="h-4 w-4 shrink-0 object-contain"
+                        />
                         <span className="truncate">{row.club}</span>
                       </div>
                     </td>
@@ -1355,20 +1496,30 @@ export default function TopScorersTable({
                     ) : null}
 
                     {visibleColumns.assists ? (
-                      <td className="px-space-sm text-center font-medium">{row.assists}</td>
+                      <td className="px-space-sm text-center font-medium">
+                        {row.assists}
+                      </td>
                     ) : null}
 
                     {visibleColumns.ga ? (
-                      <td className="px-space-sm text-center font-bold text-primary">{row.ga}</td>
+                      <td className="px-space-sm text-center font-bold text-primary">
+                        {row.ga}
+                      </td>
                     ) : null}
 
                     {visibleColumns.penalties ? (
-                      <td className="px-space-sm text-center font-medium">{row.penalties}</td>
+                      <td className="px-space-sm text-center font-medium">
+                        {row.penalties}
+                      </td>
                     ) : null}
 
                     {visibleColumns.goalsPerApp ? (
                       <td className="px-space-md text-center font-bold text-primary">
-                        {row.goalsPerApp === null ? <Dash /> : row.goalsPerApp.toFixed(2)}
+                        {row.goalsPerApp === null ? (
+                          <Dash />
+                        ) : (
+                          row.goalsPerApp.toFixed(2)
+                        )}
                       </td>
                     ) : null}
                   </tr>
@@ -1398,8 +1549,11 @@ export default function TopScorersTable({
                   {EN_DASH}
                   {rangeEnd}
                 </strong>{" "}
-                of <strong className="font-bold text-primary">{sorted.length}</strong> recorded
-                goalscorers
+                of{" "}
+                <strong className="font-bold text-primary">
+                  {sorted.length}
+                </strong>{" "}
+                recorded goalscorers
               </span>
               <div className="flex items-center gap-1.5 font-label-sm text-label-sm uppercase text-secondary">
                 <span>Per Page:</span>
@@ -1438,7 +1592,10 @@ export default function TopScorersTable({
                     : "bg-surface-container-lowest text-secondary transition-colors hover:bg-surface-container"
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                <span
+                  className="material-symbols-outlined text-[14px]"
+                  aria-hidden="true"
+                >
                   chevron_left
                 </span>
               </button>
@@ -1479,7 +1636,10 @@ export default function TopScorersTable({
                     : "bg-surface-container-lowest text-secondary transition-colors hover:bg-surface-container"
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                <span
+                  className="material-symbols-outlined text-[14px]"
+                  aria-hidden="true"
+                >
                   chevron_right
                 </span>
               </button>
@@ -1516,7 +1676,9 @@ export default function TopScorersTable({
                 </div>
               </div>
             </div>
-            <span className="pt-1 font-label-sm text-label-sm text-secondary">{seasonNote}</span>
+            <span className="pt-1 font-label-sm text-label-sm text-secondary">
+              {seasonNote}
+            </span>
           </div>
         </section>
       </div>

@@ -76,6 +76,7 @@ export default async function TopScorersView({
     <main className="scorers-canvas min-h-screen w-full bg-surface font-body-md text-on-surface">
       <TopScorersTable
         competitionName={competitionName}
+        competition={competition}
         competitionProviderId={entry.providerId}
         scorers={scorers}
         season={season}

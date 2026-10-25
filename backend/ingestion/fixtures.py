@@ -295,113 +295,128 @@ async def ingest_fixtures(
 
     async with track_job(session, "match", data_source_id) as job:
         try:
+            # Provider failure propagates; track_job marks the job failed.
             fixtures_raw = await provider.get_fixtures(
                 league_id=provider_league_id,
                 season=provider_season_year,
             )
-        except Exception:
-            # Provider failure — track_job marks the job failed and re-raises.
-            raise
 
-        if not fixtures_raw:
-            return result
+            if not fixtures_raw:
+                return result
 
-        for raw in fixtures_raw:
-            try:
-                # Normalize via existing adapter layer — no provider JSON
-                # parsing or normalization logic duplicated here.
-                summary = normalize_match_summary(raw)
+            for raw in fixtures_raw:
+                try:
+                    # Normalize via existing adapter layer — no provider JSON
+                    # parsing or normalization logic duplicated here.
+                    async with session.begin_nested():
+                        summary = normalize_match_summary(raw)
 
-                # Resolve internal team IDs via external_ids mapping.
-                home_internal = await _resolve_team_id(
-                    session, provider_name, summary.home_team.id
-                )
-                away_internal = await _resolve_team_id(
-                    session, provider_name, summary.away_team.id
-                )
-
-                if home_internal is None or away_internal is None:
-                    result.skipped += 1
-                    continue
-
-                # Parse temporal fields from canonical model strings.
-                match_date = _parse_date(summary.date)
-                if match_date is None:
-                    result.skipped += 1
-                    continue
-                kickoff = _parse_time(summary.kickoff_time)
-
-                # Upsert Match row — conflict key is slug (unique constraint).
-                match, match_created = await upsert_entity(
-                    session,
-                    Match,
-                    conflict_keys={"slug": summary.slug},
-                    values={
-                        "competition_id": competition_id,
-                        "season_id": season_id,
-                        "home_team_id": home_internal,
-                        "away_team_id": away_internal,
-                        "date": match_date,
-                        "kickoff_time": kickoff,
-                        "status": _status_str(summary.status),
-                        "minute": summary.minute,
-                        "home_score": summary.home_score,
-                        "away_score": summary.away_score,
-                    },
-                    preserve_existing=True,
-                )
-
-                if match_created:
-                    result.created += 1
-                else:
-                    result.updated += 1
-
-                # Create/update external_ids mapping for this match.
-                ext_id = str(summary.id)
-
-                # Conflict detection: does this external_id already map to a
-                # different internal match ID?
-                stmt = select(ExternalId).where(
-                    ExternalId.entity_type == "match",
-                    ExternalId.provider == provider_name,
-                    ExternalId.external_id == ext_id,
-                )
-                ext_result = await session.execute(stmt)
-                existing_ext = ext_result.scalar_one_or_none()
-
-                if existing_ext is not None:
-                    existing_match_id = getattr(existing_ext, "match_id", None)
-                    if existing_match_id is not None and existing_match_id != match.id:
-                        # CONFLICT: same provider+external_id maps to a
-                        # different internal match. Do not reassign.
-                        result.conflicts += 1
-                        result.records_failed += 1
-                        result.errors.append(
-                            f"external_id {ext_id} ({provider_name}) already "
-                            f"maps to match_id {existing_match_id}, not {match.id}"
+                        # Resolve internal team IDs via external_ids mapping.
+                        home_internal = await _resolve_team_id(
+                            session, provider_name, summary.home_team.id
                         )
-                        continue
-                    # Already maps to the same match — no action needed.
+                        away_internal = await _resolve_team_id(
+                            session, provider_name, summary.away_team.id
+                        )
 
-                # Upsert external_ids mapping via match_id column.
-                await upsert_external_id(
-                    session,
-                    entity_type="match",
-                    provider=provider_name,
-                    external_id=ext_id,
-                    internal_id=match.id,
-                    entity_column="match_id",
-                )
+                        if home_internal is None or away_internal is None:
+                            result.skipped += 1
+                            continue
 
-                result.records_processed += 1
+                        # Parse temporal fields from canonical model strings.
+                        match_date = _parse_date(summary.date)
+                        if match_date is None:
+                            result.skipped += 1
+                            continue
+                        kickoff = _parse_time(summary.kickoff_time)
 
-            except Exception as exc:  # noqa: BLE001 — record and continue batch
-                result.records_failed += 1
-                result.errors.append(str(exc))
-                logger.warning(
-                    "Fixture ingestion failed for id=%s: %s",
-                    raw.get("id", "unknown") if isinstance(raw, dict) else "unknown",
-                    exc,
-                )
+                        # Resolve the provider match mapping *before* writing the
+                        # match. A provider id that is already bound to a different
+                        # internal match must never create or update a match row.
+                        ext_id = str(summary.id)
+                        stmt = select(ExternalId).where(
+                            ExternalId.entity_type == "match",
+                            ExternalId.provider == provider_name,
+                            ExternalId.external_id == ext_id,
+                        )
+                        ext_result = await session.execute(stmt)
+                        existing_ext = ext_result.scalar_one_or_none()
+                        existing_match_id = (
+                            getattr(existing_ext, "match_id", None)
+                            if existing_ext is not None
+                            else None
+                        )
+
+                        if existing_match_id is not None:
+                            slug_result = await session.execute(
+                                select(Match).where(Match.slug == summary.slug)
+                            )
+                            slug_match = slug_result.scalar_one_or_none()
+                            if slug_match is None or slug_match.id != existing_match_id:
+                                # CONFLICT: the provider id belongs to a different
+                                # internal match. Skip before any write; never
+                                # reassign the mapping.
+                                result.conflicts += 1
+                                result.records_failed += 1
+                                result.errors.append(
+                                    f"external_id {ext_id} ({provider_name}) already "
+                                    f"maps to match_id {existing_match_id}; refusing "
+                                    f"to create or update a match for slug "
+                                    f"{summary.slug!r}"
+                                )
+                                continue
+
+                        # Upsert Match row — conflict key is slug (unique constraint).
+                        match, match_created = await upsert_entity(
+                            session,
+                            Match,
+                            conflict_keys={"slug": summary.slug},
+                            values={
+                                "competition_id": competition_id,
+                                "season_id": season_id,
+                                "home_team_id": home_internal,
+                                "away_team_id": away_internal,
+                                "date": match_date,
+                                "kickoff_time": kickoff,
+                                "status": _status_str(summary.status),
+                                "minute": summary.minute,
+                                "home_score": summary.home_score,
+                                "away_score": summary.away_score,
+                            },
+                            preserve_existing=True,
+                        )
+
+                        if match_created:
+                            result.created += 1
+                        else:
+                            result.updated += 1
+
+                        # An existing mapping already points at this match, so
+                        # only missing/unbound mappings need to be written.
+                        if existing_match_id is None:
+                            await upsert_external_id(
+                                session,
+                                entity_type="match",
+                                provider=provider_name,
+                                external_id=ext_id,
+                                internal_id=match.id,
+                                entity_column="match_id",
+                            )
+
+                        result.records_processed += 1
+
+                except Exception as exc:  # noqa: BLE001 — record and continue batch
+                    result.records_failed += 1
+                    result.errors.append(str(exc))
+                    logger.warning(
+                        "Fixture ingestion failed for id=%s: %s",
+                        raw.get("id", "unknown") if isinstance(raw, dict) else "unknown",
+                        exc,
+                    )
+        finally:
+            # Keep the persisted job counters in step with the returned result
+            # on every exit path (including provider failure and empty data).
+            job.records_processed = result.records_processed
+            job.records_failed = result.records_failed
 
     return result

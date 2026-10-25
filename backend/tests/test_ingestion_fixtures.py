@@ -126,13 +126,17 @@ class _MockSession:
         season=None,
         competition_mappings=(),
         match_mapping=None,
+        matches=(),
     ):
         self.competition = competition
         self.season = season
         self.competition_mappings = list(competition_mappings)
         self.match_mapping = match_mapping
+        self.matches = list(matches)
         self.added = []
         self.flushed = 0
+        self.savepoint_commits = 0
+        self.savepoint_rollbacks = 0
 
     def add(self, instance):
         self.added.append(instance)
@@ -140,12 +144,45 @@ class _MockSession:
     async def flush(self):
         self.flushed += 1
 
+    @asynccontextmanager
+    async def begin_nested(self):
+        snapshot = len(self.added)
+        flushed = self.flushed
+        try:
+            yield
+        except Exception:
+            # Roll back partial writes to the savepoint.
+            del self.added[snapshot:]
+            self.flushed = flushed
+            self.savepoint_rollbacks = getattr(self, "savepoint_rollbacks", 0) + 1
+            raise
+        else:
+            self.savepoint_commits = getattr(self, "savepoint_commits", 0) + 1
+
+    def __init__(
+        self,
+        competition=None,
+        season=None,
+        competition_mappings=(),
+        match_mapping=None,
+        matches=(),
+    ):
+        self.competition = competition
+        self.season = season
+        self.competition_mappings = list(competition_mappings)
+        self.match_mapping = match_mapping
+        self.matches = list(matches)
+        self.added = []
+        self.flushed = 0
+
     async def execute(self, stmt):
         sql = str(stmt)
         if "FROM competitions" in sql:
             rows = [self.competition] if self.competition is not None else []
         elif "FROM seasons" in sql:
             rows = [self.season] if self.season is not None else []
+        elif "FROM matches" in sql:
+            rows = list(self.matches)
         elif "FROM external_ids" in sql:
             rows = list(self.competition_mappings)
             if self.match_mapping is not None:
@@ -295,6 +332,8 @@ class TestInsertNewFixtures:
         assert result.records_processed == 1
         assert result.records_failed == 0
         assert result.conflicts == 0
+        assert mock_job.records_processed == 1
+        assert mock_job.records_failed == 0
         assert provider_mock.get_fixtures.await_count == 1
         # The provider receives its own league id, resolved from external_ids.
         call_kwargs = provider_mock.get_fixtures.await_args.kwargs
@@ -359,6 +398,8 @@ class TestUpdateExistingFixture:
         assert result.created == 0
         assert result.updated == 1
         assert result.records_processed == 1
+        assert mock_job.records_processed == 1
+        assert mock_job.records_failed == 0
         assert mock_ue.call_args.kwargs["conflict_keys"] == {"slug": "arsenal-vs-chelsea-101"}
 
 
@@ -461,11 +502,14 @@ class TestConflictingExternalId:
             external_id="101",
             match_id=999,
         )
+        # A row with the provider's slug already exists under a *different*
+        # internal id, so the conflict must be caught before any upsert.
+        session.matches = [_MockMatch(id=200, slug="arsenal-vs-chelsea-101")]
 
         provider_mock = mock.Mock()
         provider_mock.get_fixtures = mock.AsyncMock(return_value=[_API_FOOTBALL_FIXTURE])
 
-        new_match = _MockMatch(id=200, slug="arsenal-chelsea-101")
+        new_match = _MockMatch(id=200, slug="arsenal-vs-chelsea-101")
 
         # Conflict detection: external_id "101" already maps to match_id 999.
 
@@ -498,9 +542,169 @@ class TestConflictingExternalId:
 
         assert result.conflicts == 1
         assert result.records_failed == 1
-        # upsert_external_id should NOT be called for the conflicting fixture
+        assert result.records_processed == 0
+        # The conflict must prevent the Match from being inserted or updated,
+        # not merely prevent the external-id row from being written.
+        mock_ue.assert_not_called()
         mock_uei.assert_not_called()
+        assert session.added == []
+        assert mock_job.records_failed == 1
+        assert mock_job.records_processed == 0
         assert "already maps to match_id 999" in result.errors[0]
+
+    def test_conflict_without_existing_match_row_skips_upsert(self):
+        """A dangling conflicting mapping still must not create a Match."""
+        session = _stored_session()
+        session.match_mapping = ExternalId(
+            id=9,
+            entity_type="match",
+            provider="api_football",
+            external_id="101",
+            match_id=999,
+        )
+
+        provider_mock = mock.Mock()
+        provider_mock.get_fixtures = mock.AsyncMock(return_value=[_API_FOOTBALL_FIXTURE])
+
+        with _mock_registry("api_football", provider_mock), _mock_track_job() as (
+            track_patcher,
+            mock_job,
+        ), mock.patch.object(
+            fixtures_mod, "_resolve_team_id", new=mock.AsyncMock(side_effect=[1, 2])
+        ), mock.patch.object(
+            fixtures_mod, "upsert_entity", new=mock.AsyncMock()
+        ) as mock_ue, mock.patch.object(
+            fixtures_mod, "upsert_external_id", new=mock.AsyncMock()
+        ) as mock_uei:
+            track_patcher.start()
+            result = _run_async(
+                ingest_fixtures(
+                    session,
+                    provider_name="api_football",
+                    competition_id=1,
+                    season_id=5,
+                    data_source_id=1,
+                    season_year=2026,
+                )
+            )
+            track_patcher.stop()
+
+        assert result.conflicts == 1
+        assert result.records_failed == 1
+        assert result.records_processed == 0
+        mock_ue.assert_not_called()
+        mock_uei.assert_not_called()
+        assert session.added == []
+
+    def test_mapping_to_same_match_remains_idempotent(self):
+        """An existing correct mapping is reused and not rewritten."""
+        session = _stored_session()
+        existing_match = _MockMatch(id=100, slug="arsenal-vs-chelsea-101")
+        session.matches = [existing_match]
+        session.match_mapping = ExternalId(
+            id=9,
+            entity_type="match",
+            provider="api_football",
+            external_id="101",
+            match_id=100,
+        )
+
+        provider_mock = mock.Mock()
+        provider_mock.get_fixtures = mock.AsyncMock(return_value=[_API_FOOTBALL_FIXTURE])
+
+        with _mock_registry("api_football", provider_mock), _mock_track_job() as (
+            track_patcher,
+            mock_job,
+        ), mock.patch.object(
+            fixtures_mod, "_resolve_team_id", new=mock.AsyncMock(side_effect=[1, 2])
+        ), mock.patch.object(
+            fixtures_mod,
+            "upsert_entity",
+            new=mock.AsyncMock(return_value=(existing_match, False)),
+        ) as mock_ue, mock.patch.object(
+            fixtures_mod, "upsert_external_id", new=mock.AsyncMock()
+        ) as mock_uei:
+            track_patcher.start()
+            result = _run_async(
+                ingest_fixtures(
+                    session,
+                    provider_name="api_football",
+                    competition_id=1,
+                    season_id=5,
+                    data_source_id=1,
+                    season_year=2026,
+                )
+            )
+            track_patcher.stop()
+
+        assert result.updated == 1
+        assert result.records_processed == 1
+        assert result.records_failed == 0
+        assert result.conflicts == 0
+        mock_ue.assert_called_once()
+        mock_uei.assert_not_called()
+        assert mock_job.records_processed == 1
+        assert mock_job.records_failed == 0
+
+
+class TestMixedOutcomes:
+    def test_success_failure_and_skip_counts(self):
+        """Job and result counters stay aligned across mixed outcomes."""
+        session = _stored_session()
+
+        provider_mock = mock.Mock()
+        provider_mock.get_fixtures = mock.AsyncMock(
+            return_value=[
+                _API_FOOTBALL_FIXTURE,
+                _API_FOOTBALL_FIXTURE,
+                _API_FOOTBALL_FIXTURE,
+            ]
+        )
+
+        match_mock = _MockMatch(id=100, slug="arsenal-vs-chelsea-101")
+
+        with _mock_registry("api_football", provider_mock), _mock_track_job() as (
+            track_patcher,
+            mock_job,
+        ), mock.patch.object(
+            fixtures_mod,
+            "_resolve_team_id",
+            new=mock.AsyncMock(
+                side_effect=[1, 2, RuntimeError("team lookup exploded"), None, None]
+            ),
+        ), mock.patch.object(
+            fixtures_mod,
+            "upsert_entity",
+            new=mock.AsyncMock(return_value=(match_mock, True)),
+        ) as mock_ue, mock.patch.object(
+            fixtures_mod, "upsert_external_id", new=mock.AsyncMock()
+        ) as mock_uei:
+            track_patcher.start()
+            result = _run_async(
+                ingest_fixtures(
+                    session,
+                    provider_name="api_football",
+                    competition_id=1,
+                    season_id=5,
+                    data_source_id=1,
+                    season_year=2026,
+                )
+            )
+            track_patcher.stop()
+
+        # 1 created, 1 failed (unexpected processing error), 1 skipped fixture.
+        assert result.created == 1
+        assert result.skipped == 1
+        assert result.records_processed == 1
+        assert result.records_failed == 1
+        assert result.conflicts == 0
+        assert len(result.errors) == 1
+        assert "team lookup exploded" in result.errors[0]
+        assert mock_ue.call_count == 1
+        assert mock_uei.call_count == 1
+        # Persisted job counters mirror the returned result exactly.
+        assert mock_job.records_processed == result.records_processed
+        assert mock_job.records_failed == result.records_failed
 
 
 class TestEmptyResponse:
@@ -538,6 +742,8 @@ class TestEmptyResponse:
         assert result.records_processed == 0
         assert result.records_failed == 0
         assert result.conflicts == 0
+        assert mock_job.records_processed == 0
+        assert mock_job.records_failed == 0
         mock_ue.assert_not_called()
         mock_uei.assert_not_called()
 
@@ -605,6 +811,11 @@ class TestMissingTeamMapping:
         assert result.skipped == 1
         assert result.created == 0
         assert result.updated == 0
+        # Skipped fixtures are neither processed nor failed.
+        assert result.records_processed == 0
+        assert result.records_failed == 0
+        assert mock_job.records_processed == 0
+        assert mock_job.records_failed == 0
         mock_ue.assert_not_called()
         mock_uei.assert_not_called()
 
@@ -716,6 +927,8 @@ class TestFootballDataFormat:
 
         assert result.created == 1
         assert result.records_processed == 1
+        assert mock_job.records_processed == 1
+        assert mock_job.records_failed == 0
         # Stored football-data.org code "PL" is passed as that provider's own
         # competition reference, never the internal id or API-Football's 39.
         call_kwargs = provider_mock.get_fixtures.await_args.kwargs
@@ -773,6 +986,8 @@ class TestMultipleFixtures:
 
         assert result.created == 2
         assert result.records_processed == 2
+        assert mock_job.records_processed == 2
+        assert mock_job.records_failed == 0
         assert mock_ue.call_count == 2
         assert mock_uei.call_count == 2
 

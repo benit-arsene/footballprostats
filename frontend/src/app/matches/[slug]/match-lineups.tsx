@@ -1,3 +1,4 @@
+import Link from "next/link";
 import TeamCrest from "@/components/TeamCrest";
 import type { LineupPlayer, TeamSummary } from "@/lib/types";
 
@@ -46,7 +47,11 @@ function PlayerNode({ player }: { player: LineupPlayer }) {
     : nameParts[0][0];
 
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <Link
+      href={`/players/${player.player.slug}`}
+      aria-label={`View ${player.player.name}'s profile`}
+      className="group flex flex-col items-center gap-0.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+    >
       {/* Player avatar placeholder with initials */}
       <div className="relative">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-300 text-[10px] font-bold text-zinc-700 ring-2 ring-white/50">
@@ -60,10 +65,10 @@ function PlayerNode({ player }: { player: LineupPlayer }) {
         )}
       </div>
       {/* Name + number */}
-      <span className="text-center text-[10px] leading-tight text-zinc-800">
+      <span className="text-center text-[10px] leading-tight text-zinc-800 group-hover:underline">
         {player.shirt_number ?? ""} {player.player.name.split(" ").pop()}
       </span>
-    </div>
+    </Link>
   );
 }
 

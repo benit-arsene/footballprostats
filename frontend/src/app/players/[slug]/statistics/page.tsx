@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { extractId } from "@/lib/slug";
 import { getPlayer } from "@/lib/api";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
+async function getPlayerOrNull(slug: string) {
+  try {
+    return await getPlayer(slug);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("API 404:")) return null;
+    throw error;
+  }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const playerId = extractId(slug);
-  if (!playerId) return { title: "Statistics Not Found" };
-
-  const player = await getPlayer(playerId).catch(() => null);
+  const player = await getPlayerOrNull(slug);
   if (!player) return { title: "Statistics Not Found" };
 
   return {
@@ -24,14 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PlayerStatisticsPage({ params }: Props) {
   const { slug } = await params;
-  const playerId = extractId(slug);
-
-  if (!playerId) notFound();
-
-  const player = await getPlayer(playerId).catch(() => null);
+  const player = await getPlayerOrNull(slug);
   if (!player) notFound();
-
-  const stats = player.career_stats;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -43,26 +42,51 @@ export default async function PlayerStatisticsPage({ params }: Props) {
 
       <h1 className="mb-2 text-3xl font-bold">{player.name} — Statistics</h1>
       <p className="mb-8 text-zinc-500">
-        {player.team.name} · {player.position} · Season {player.date_of_birth ? "Current" : "N/A"}
+        {player.team.name} · {player.position}
       </p>
 
-      <section className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {[
-          { label: "Apps", value: stats.appearances },
-          { label: "Goals", value: stats.goals },
-          { label: "Assists", value: stats.assists },
-          { label: "Yellow", value: stats.yellow_cards },
-          { label: "Red", value: stats.red_cards },
-          { label: "Minutes", value: stats.minutes_played.toLocaleString() },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="rounded-xl border border-zinc-200 p-4 text-center dark:border-zinc-800"
-          >
-            <div className="text-2xl font-bold tabular-nums">{s.value}</div>
-            <div className="mt-1 text-xs text-zinc-400">{s.label}</div>
-          </div>
-        ))}
+      <section className="mb-8 space-y-6">
+        {player.season_stats.length === 0 ? (
+          <p className="text-zinc-400">No verified season statistics are available.</p>
+        ) : (
+          player.season_stats.map((season) => {
+            const stats = [
+              { label: "Apps", value: season.appearances },
+              { label: "Goals", value: season.goals },
+              { label: "Assists", value: season.assists },
+              { label: "Yellow", value: season.yellow_cards },
+              { label: "Red", value: season.red_cards },
+              { label: "Minutes", value: season.minutes_played },
+            ].filter((stat) => stat.value !== undefined);
+            return (
+              <div key={`${season.season}-${season.competition_name ?? ""}`}>
+                <h2 className="mb-3 text-lg font-semibold">
+                  {season.season}
+                  {season.competition_name ? ` · ${season.competition_name}` : ""}
+                </h2>
+                {stats.length === 0 ? (
+                  <p className="text-zinc-400">No verified statistics are available for this season.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+                    {stats.map((stat) => (
+                      <div
+                        key={stat.label}
+                        className="rounded-xl border border-zinc-200 p-4 text-center dark:border-zinc-800"
+                      >
+                        <div className="text-2xl font-bold tabular-nums">
+                          {stat.label === "Minutes" && typeof stat.value === "number"
+                            ? stat.value.toLocaleString()
+                            : stat.value}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-400">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </section>
 
       <section>

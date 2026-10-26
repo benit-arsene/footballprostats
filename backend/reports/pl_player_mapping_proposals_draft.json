@@ -1,0 +1,1492 @@
+{
+  "count": 130,
+  "counts": {
+    "existing": 10,
+    "high": 4,
+    "manual": 1,
+    "none": 115
+  },
+  "proposals": [
+    {
+      "provider_player_id": "38101",
+      "provider_player_name": "Erling Haaland",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": 257,
+      "proposed_internal_player_name": "E. Haaland",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "6486",
+      "provider_player_name": "Alexander Isak",
+      "provider_team_id": 64,
+      "provider_team_name": "Liverpool FC",
+      "proposed_internal_player_id": 29,
+      "proposed_internal_player_name": "A. Isak",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "6396",
+      "provider_player_name": "Marcus Tavernier",
+      "provider_team_id": 1044,
+      "provider_team_name": "AFC Bournemouth",
+      "proposed_internal_player_id": 57,
+      "proposed_internal_player_name": "M. Tavernier",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "103125",
+      "provider_player_name": "João Pedro",
+      "provider_team_id": 61,
+      "provider_team_name": "Chelsea FC",
+      "proposed_internal_player_id": 236,
+      "proposed_internal_player_name": "João Pedro",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "82140",
+      "provider_player_name": "Morgan Rogers",
+      "provider_team_id": 61,
+      "provider_team_name": "Chelsea FC",
+      "proposed_internal_player_id": 370,
+      "proposed_internal_player_name": "M. Rogers",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "133242",
+      "provider_player_name": "Rayan Cherki",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "8626",
+      "provider_player_name": "Bryan Mbeumo",
+      "provider_team_id": 66,
+      "provider_team_name": "Manchester United FC",
+      "proposed_internal_player_id": 314,
+      "proposed_internal_player_name": "B. Mbeumo",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "152515",
+      "provider_player_name": "Nicolas Jackson",
+      "provider_team_id": 58,
+      "provider_team_name": "Aston Villa FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "99813",
+      "provider_player_name": "Bukayo Saka",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": 148,
+      "proposed_internal_player_name": "B. Saka",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "171995",
+      "provider_player_name": "Thierno Barry",
+      "provider_team_id": 62,
+      "provider_team_name": "Everton FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "190851",
+      "provider_player_name": "Jack Hinshelwood",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "2074",
+      "provider_player_name": "Pedro Neto",
+      "provider_team_id": 61,
+      "provider_team_name": "Chelsea FC",
+      "proposed_internal_player_id": 86,
+      "proposed_internal_player_name": "Pedro Neto",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "8273",
+      "provider_player_name": "Pascal Groß",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "123286",
+      "provider_player_name": "Kevin Schade",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7839",
+      "provider_player_name": "Dominic Calvert-Lewin",
+      "provider_team_id": 341,
+      "provider_team_name": "Leeds United FC",
+      "proposed_internal_player_id": 170,
+      "proposed_internal_player_name": "D. Calvert-Lewin",
+      "confidence": "high-confidence candidate",
+      "manual_approval_required": true,
+      "candidates": [
+        {
+          "id": 170,
+          "name": "D. Calvert-Lewin",
+          "score": 0.6,
+          "signals": [
+            "shared_tokens:calvert,lewin",
+            "initials_match"
+          ],
+          "team_conflict": false
+        }
+      ]
+    },
+    {
+      "provider_player_id": "3257",
+      "provider_player_name": "Bruno Fernandes",
+      "provider_team_id": 66,
+      "provider_team_name": "Manchester United FC",
+      "proposed_internal_player_id": 19,
+      "proposed_internal_player_name": "Bruno Fernandes",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "213072",
+      "provider_player_name": "Mohamed Belloumi",
+      "provider_team_id": 322,
+      "provider_team_name": "Hull City AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "264300",
+      "provider_player_name": "Charalampos Kostoulas",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "97535",
+      "provider_player_name": "Brian Brobbey",
+      "provider_team_id": 71,
+      "provider_team_name": "Sunderland AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "131260",
+      "provider_player_name": "Evanilson",
+      "provider_team_id": 1044,
+      "provider_team_name": "AFC Bournemouth",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "171",
+      "provider_player_name": "Kai Havertz",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7427",
+      "provider_player_name": "Martin Ødegaard",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "176628",
+      "provider_player_name": "Emersonn",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "140194",
+      "provider_player_name": "Kiernan Dewsbury Hall",
+      "provider_team_id": 62,
+      "provider_team_name": "Everton FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "101910",
+      "provider_player_name": "Keane Lewis-Potter",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "10000",
+      "provider_player_name": "Vitaly Janelt",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "142075",
+      "provider_player_name": "Maxim De Cuyper",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "166376",
+      "provider_player_name": "Anthony Elanga",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7798",
+      "provider_player_name": "Joe Willock",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "246418",
+      "provider_player_name": "Joshua King",
+      "provider_team_id": 63,
+      "provider_team_name": "Fulham FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "144892",
+      "provider_player_name": "Cole Palmer",
+      "provider_team_id": 61,
+      "provider_team_name": "Chelsea FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "77641",
+      "provider_player_name": "Dan Ndoye",
+      "provider_team_id": 351,
+      "provider_team_name": "Nottingham Forest FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "273423",
+      "provider_player_name": "Víctor Muñoz",
+      "provider_team_id": 64,
+      "provider_team_name": "Liverpool FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "246670",
+      "provider_player_name": "Malick Yalcouyé",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "99120",
+      "provider_player_name": "Leif Davis",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "8076",
+      "provider_player_name": "Harvey Barnes",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "4184",
+      "provider_player_name": "Jayden Bogle",
+      "provider_team_id": 341,
+      "provider_team_name": "Leeds United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "137068",
+      "provider_player_name": "Tyrick Mitchell",
+      "provider_team_id": 354,
+      "provider_team_name": "Crystal Palace FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "67893",
+      "provider_player_name": "Zian Flemming",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "1684",
+      "provider_player_name": "Bruno Guimarães",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": 31,
+      "proposed_internal_player_name": "Bruno Guimarães",
+      "confidence": "high-confidence candidate",
+      "manual_approval_required": true,
+      "candidates": [
+        {
+          "id": 31,
+          "name": "Bruno Guimarães",
+          "score": 1.0,
+          "signals": [
+            "shared_tokens:bruno,guimaraes",
+            "initials_match"
+          ],
+          "team_conflict": false
+        }
+      ]
+    },
+    {
+      "provider_player_id": "145613",
+      "provider_player_name": "Yasin Ayari",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "212309",
+      "provider_player_name": "Johan Manzambi",
+      "provider_team_id": 58,
+      "provider_team_name": "Aston Villa FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "4417",
+      "provider_player_name": "Antoine Semenyo",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "3320",
+      "provider_player_name": "Jordan Henderson",
+      "provider_team_id": 61,
+      "provider_team_name": "Chelsea FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "114123",
+      "provider_player_name": "Jack Rudoni",
+      "provider_team_id": 1076,
+      "provider_team_name": "Coventry City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "6451",
+      "provider_player_name": "Semi Ajayi",
+      "provider_team_id": 322,
+      "provider_team_name": "Hull City AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "190558",
+      "provider_player_name": "Nobel Mendy",
+      "provider_team_id": 322,
+      "provider_team_name": "Hull City AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "187375",
+      "provider_player_name": "Nilson Angulo",
+      "provider_team_id": 71,
+      "provider_team_name": "Sunderland AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "4158",
+      "provider_player_name": "Jack Clarke",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "65843",
+      "provider_player_name": "Anton Stach",
+      "provider_team_id": 341,
+      "provider_team_name": "Leeds United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "204348",
+      "provider_player_name": "Michael Kayode",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "118489",
+      "provider_player_name": "Marc Guéhi",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "122266",
+      "provider_player_name": "Joško Gvardiol",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7459",
+      "provider_player_name": "Cody Gakpo",
+      "provider_team_id": 64,
+      "provider_team_name": "Liverpool FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "16347",
+      "provider_player_name": "Dominik Szoboszlai",
+      "provider_team_id": 64,
+      "provider_team_name": "Liverpool FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "217658",
+      "provider_player_name": "Gonzalo García",
+      "provider_team_id": 63,
+      "provider_team_name": "Fulham FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "4091",
+      "provider_player_name": "Morgan Gibbs-White",
+      "provider_team_id": 351,
+      "provider_team_name": "Nottingham Forest FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "161088",
+      "provider_player_name": "Alex Scott",
+      "provider_team_id": 1044,
+      "provider_team_name": "AFC Bournemouth",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "3316",
+      "provider_player_name": "James Tarkowski",
+      "provider_team_id": 62,
+      "provider_team_name": "Everton FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "110807",
+      "provider_player_name": "Liam Millar",
+      "provider_team_id": 322,
+      "provider_team_name": "Hull City AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "612",
+      "provider_player_name": "Yoane Wissa",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "83599",
+      "provider_player_name": "Wilson Isidor",
+      "provider_team_id": 71,
+      "provider_team_name": "Sunderland AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "172738",
+      "provider_player_name": "Romeo Lavia",
+      "provider_team_id": 61,
+      "provider_team_name": "Chelsea FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "9053",
+      "provider_player_name": "Chuba Akpom",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "111437",
+      "provider_player_name": "Jacob Ramsey",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "216835",
+      "provider_player_name": "Luka Vušković",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "99664",
+      "provider_player_name": "Enzo Le Fée",
+      "provider_team_id": 71,
+      "provider_team_name": "Sunderland AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "290848",
+      "provider_player_name": "César Palacios",
+      "provider_team_id": 63,
+      "provider_team_name": "Fulham FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "8065",
+      "provider_player_name": "Ben Chilwell",
+      "provider_team_id": 354,
+      "provider_team_name": "Crystal Palace FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "250436",
+      "provider_player_name": "Tyrique George",
+      "provider_team_id": 62,
+      "provider_team_name": "Everton FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "124244",
+      "provider_player_name": "Benjamin Šeško",
+      "provider_team_id": 66,
+      "provider_team_name": "Manchester United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7792",
+      "provider_player_name": "Ainsley Maitland-Niles",
+      "provider_team_id": 62,
+      "provider_team_name": "Everton FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "213425",
+      "provider_player_name": "Anan Khalaili",
+      "provider_team_id": 354,
+      "provider_team_name": "Crystal Palace FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "213269",
+      "provider_player_name": "Jørgen Strand Larsen",
+      "provider_team_id": 354,
+      "provider_team_name": "Crystal Palace FC",
+      "proposed_internal_player_id": 87,
+      "proposed_internal_player_name": "J. Strand Larsen",
+      "confidence": "high-confidence candidate",
+      "manual_approval_required": true,
+      "candidates": [
+        {
+          "id": 87,
+          "name": "J. Strand Larsen",
+          "score": 0.75,
+          "signals": [
+            "shared_tokens:j,larsen,strand"
+          ],
+          "team_conflict": false
+        }
+      ]
+    },
+    {
+      "provider_player_id": "151095",
+      "provider_player_name": "Liam Delap",
+      "provider_team_id": 351,
+      "provider_team_name": "Nottingham Forest FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "260718",
+      "provider_player_name": "Alysson",
+      "provider_team_id": 58,
+      "provider_team_name": "Aston Villa FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "256339",
+      "provider_player_name": "Igor Jesus",
+      "provider_team_id": 351,
+      "provider_team_name": "Nottingham Forest FC",
+      "proposed_internal_player_id": 270,
+      "proposed_internal_player_name": "Igor",
+      "confidence": "high-confidence candidate",
+      "manual_approval_required": true,
+      "candidates": [
+        {
+          "id": 270,
+          "name": "Igor",
+          "score": 0.5,
+          "signals": [
+            "shared_tokens:igor"
+          ],
+          "team_conflict": false
+        }
+      ]
+    },
+    {
+      "provider_player_id": "7561",
+      "provider_player_name": "Justin Kluivert",
+      "provider_team_id": 1044,
+      "provider_team_name": "AFC Bournemouth",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "8259",
+      "provider_player_name": "Lewis Dunk",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "16058",
+      "provider_player_name": "Noah Okafor",
+      "provider_team_id": 341,
+      "provider_team_name": "Leeds United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "249312",
+      "provider_player_name": "Bazoumana Touré",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "150778",
+      "provider_player_name": "Jaidon Anthony",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "138230",
+      "provider_player_name": "Thiago",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "manual review",
+      "manual_approval_required": true,
+      "candidates": [
+        {
+          "id": 110,
+          "name": "Thiago Alcântara",
+          "score": 0.5,
+          "signals": [
+            "shared_tokens:thiago"
+          ],
+          "team_conflict": false
+        },
+        {
+          "id": 230,
+          "name": "Thiago Silva",
+          "score": 0.5,
+          "signals": [
+            "shared_tokens:thiago"
+          ],
+          "team_conflict": false
+        }
+      ]
+    },
+    {
+      "provider_player_id": "151119",
+      "provider_player_name": "Fabio Carvalho",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "31941",
+      "provider_player_name": "Emiliano Buendía",
+      "provider_team_id": 58,
+      "provider_team_name": "Aston Villa FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "119265",
+      "provider_player_name": "Conor Gallagher",
+      "provider_team_id": 73,
+      "provider_team_name": "Tottenham Hotspur FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "98566",
+      "provider_player_name": "Jan Paul van Hecke",
+      "provider_team_id": 73,
+      "provider_team_name": "Tottenham Hotspur FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "270273",
+      "provider_player_name": "Chema Andrés",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "191140",
+      "provider_player_name": "Lewis Hall",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "213270",
+      "provider_player_name": "Mohamed Cho",
+      "provider_team_id": 322,
+      "provider_team_name": "Hull City AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "6308",
+      "provider_player_name": "Jay Dasilva",
+      "provider_team_id": 1076,
+      "provider_team_name": "Coventry City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "102603",
+      "provider_player_name": "Enzo Fernández",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "30842",
+      "provider_player_name": "Matheus Cunha",
+      "provider_team_id": 66,
+      "provider_team_name": "Manchester United FC",
+      "proposed_internal_player_id": 18,
+      "proposed_internal_player_name": "Matheus Cunha",
+      "confidence": "existing mapping",
+      "manual_approval_required": false
+    },
+    {
+      "provider_player_id": "5613",
+      "provider_player_name": "James Justin",
+      "provider_team_id": 341,
+      "provider_team_name": "Leeds United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "133512",
+      "provider_player_name": "Riccardo Calafiori",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "147891",
+      "provider_player_name": "Jaouen Hadjam",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "3959",
+      "provider_player_name": "Ryan Sessegnon",
+      "provider_team_id": 63,
+      "provider_team_name": "Fulham FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "270889",
+      "provider_player_name": "Abdoul Ouattara",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "25650",
+      "provider_player_name": "Dara O'Shea",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "204421",
+      "provider_player_name": "Yegor Yarmolyuk",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "34646",
+      "provider_player_name": "John McGinn",
+      "provider_team_id": 58,
+      "provider_team_name": "Aston Villa FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "16068",
+      "provider_player_name": "Kristoffer Ajer",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7878",
+      "provider_player_name": "Dominic Solanke",
+      "provider_team_id": 73,
+      "provider_team_name": "Tottenham Hotspur FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "80761",
+      "provider_player_name": "Joe Gelhardt",
+      "provider_team_id": 322,
+      "provider_team_name": "Hull City AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "6716",
+      "provider_player_name": "Daichi Kamada",
+      "provider_team_id": 354,
+      "provider_team_name": "Crystal Palace FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "3737",
+      "provider_player_name": "Jefferson Lerma",
+      "provider_team_id": 354,
+      "provider_team_name": "Crystal Palace FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "152505",
+      "provider_player_name": "Yeremi Pino",
+      "provider_team_id": 354,
+      "provider_team_name": "Crystal Palace FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "99775",
+      "provider_player_name": "Jeremy Doku",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "213712",
+      "provider_player_name": "Sidiki Cherif",
+      "provider_team_id": 1076,
+      "provider_team_name": "Coventry City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "81082",
+      "provider_player_name": "Sven Botman",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "146122",
+      "provider_player_name": "Ellis Simms",
+      "provider_team_id": 1076,
+      "provider_team_name": "Coventry City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "286320",
+      "provider_player_name": "Stephen Mfuni",
+      "provider_team_id": 1076,
+      "provider_team_name": "Coventry City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "3392",
+      "provider_player_name": "Alex Iwobi",
+      "provider_team_id": 63,
+      "provider_team_name": "Fulham FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7888",
+      "provider_player_name": "Phil Foden",
+      "provider_team_id": 65,
+      "provider_team_name": "Manchester City FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "44017",
+      "provider_player_name": "Daizen Maeda",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "178951",
+      "provider_player_name": "Diego Gómez",
+      "provider_team_id": 397,
+      "provider_team_name": "Brighton & Hove Albion FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "167720",
+      "provider_player_name": "Noni Madueke",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "3992",
+      "provider_player_name": "James Maddison",
+      "provider_team_id": 73,
+      "provider_team_name": "Tottenham Hotspur FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "66896",
+      "provider_player_name": "Omar Marmoush",
+      "provider_team_id": 73,
+      "provider_team_name": "Tottenham Hotspur FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "7994",
+      "provider_player_name": "Ben Davies",
+      "provider_team_id": 73,
+      "provider_team_name": "Tottenham Hotspur FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "133765",
+      "provider_player_name": "Neco Williams",
+      "provider_team_id": 351,
+      "provider_team_name": "Nottingham Forest FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "168949",
+      "provider_player_name": "Julio Enciso",
+      "provider_team_id": 349,
+      "provider_team_name": "Ipswich Town FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "6317",
+      "provider_player_name": "Ezri Konsa",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "23128",
+      "provider_player_name": "Gabriel Magalhães",
+      "provider_team_id": 57,
+      "provider_team_name": "Arsenal FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "179716",
+      "provider_player_name": "Oscar Bobb",
+      "provider_team_id": 63,
+      "provider_team_name": "Fulham FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "171977",
+      "provider_player_name": "Mathys Tel",
+      "provider_team_id": 73,
+      "provider_team_name": "Tottenham Hotspur FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "169324",
+      "provider_player_name": "William Osula",
+      "provider_team_id": 67,
+      "provider_team_name": "Newcastle United FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "203356",
+      "provider_player_name": "Rayan",
+      "provider_team_id": 1044,
+      "provider_team_name": "AFC Bournemouth",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "4359",
+      "provider_player_name": "Oliver McBurnie",
+      "provider_team_id": 322,
+      "provider_team_name": "Hull City AFC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    },
+    {
+      "provider_player_id": "177305",
+      "provider_player_name": "Dango Ouattara",
+      "provider_team_id": 402,
+      "provider_team_name": "Brentford FC",
+      "proposed_internal_player_id": null,
+      "proposed_internal_player_name": null,
+      "confidence": "no candidate",
+      "manual_approval_required": true,
+      "candidates": []
+    }
+  ]
+}

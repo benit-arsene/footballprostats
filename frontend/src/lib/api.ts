@@ -64,8 +64,8 @@ export function getTeam(teamId: number): Promise<TeamProfile> {
 
 // ─── Player endpoints ─────────────────────────────────────────────────
 
-export function getPlayer(playerId: number): Promise<PlayerProfile> {
-  return apiFetch(`/api/v1/players/${playerId}`);
+export function getPlayer(playerId: number | string): Promise<PlayerProfile> {
+  return apiFetch(`/api/v1/players/${encodeURIComponent(playerId)}`);
 }
 
 // ─── League endpoints ─────────────────────────────────────────────────

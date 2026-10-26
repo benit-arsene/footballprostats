@@ -61,8 +61,19 @@ export interface PlayerProfile extends PlayerSummary {
   height_cm: number | null;
   foot: string;
   team: TeamSummary;
-  career_stats: CareerStats;
+  season_stats: PlayerSeasonStats[];
   match_logs: MatchLogEntry[];
+}
+
+export interface PlayerSeasonStats {
+  season: string;
+  competition_name?: string;
+  appearances?: number;
+  goals?: number;
+  assists?: number;
+  yellow_cards?: number;
+  red_cards?: number;
+  minutes_played?: number;
 }
 
 export interface CareerStats {

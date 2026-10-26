@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import Link from "next/link";
 import type { MatchEvent, MatchStatus } from "@/lib/types";
 import { getMatchEvents } from "@/lib/api";
 import { useMatchPolling } from "@/lib/use-polling";
@@ -138,13 +139,22 @@ export function MatchTicker({
                       {event.detail && (
                         <span className="text-[10px] text-zinc-600">({event.detail})</span>
                       )}
-                      <span className="text-xs font-medium text-zinc-900">{event.player.name}</span>
+                      <Link
+                        href={`/players/${event.player.slug}`}
+                        className="text-xs font-medium text-zinc-900 hover:underline"
+                      >
+                        {event.player.name}
+                      </Link>
                     </div>
                     {event.second_player && (
                       <div className={`mt-0.5 text-[10px] text-zinc-600 ${isHome ? "" : "text-right"}`}>
-                        {event.type === "substitution"
-                          ? `↔ ${event.second_player.name}`
-                          : `assist: ${event.second_player.name}`}
+                        {event.type === "substitution" ? "↔ " : "assist: "}
+                        <Link
+                          href={`/players/${event.second_player.slug}`}
+                          className="hover:underline"
+                        >
+                          {event.second_player.name}
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -208,7 +218,16 @@ function EventDescription({ event }: { event: MatchEvent }) {
         <span className="text-blue-500 font-semibold">
           Substitution
           {event.second_player && (
-            <span className="text-zinc-400 font-normal"> ({event.second_player.name})</span>
+            <span className="font-normal text-zinc-400">
+              {" ("}
+              <Link
+                href={`/players/${event.second_player.slug}`}
+                className="hover:underline"
+              >
+                {event.second_player.name}
+              </Link>
+              {")"}
+            </span>
           )}
         </span>
       );
